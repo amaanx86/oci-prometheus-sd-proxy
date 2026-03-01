@@ -1,0 +1,39 @@
+# config.yaml - write once, never touch again.
+# Copy to config.yaml and fill in your OCI credentials.
+# All scalar values can be overridden by environment variables.
+
+server:
+  port: 8080
+  # Use SERVER_TOKEN env var in production - never hardcode here
+  token: "change-me-use-env-var-in-prod"
+
+discovery:
+  tag_key: monitoring            # OCI freeform tag key to filter instances
+  tag_value: enabled             # OCI freeform tag value to filter instances
+  linux_port: 9100               # node_exporter default port
+  windows_port: 9182             # windows_exporter default port
+  refresh_interval: 5m           # how often to poll OCI APIs for new instances
+
+tenancies:
+  - name: my-tenancy
+    region: me-jeddah-1         # OCI region code
+    tenancy_id: ocid1.tenancy.oc1..xxxxxx
+    user_id: ocid1.user.oc1..xxxxxx
+    fingerprint: "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+    # Path to OCI API private key (unencrypted recommended for service accounts)
+    private_key_path: /etc/oci-sd/keys/api_key.pem
+    # Passphrase for encrypted key (leave empty if key is unencrypted)
+    passphrase: ""
+    # Leave empty [] to auto-discover all compartments in the tenancy
+    # Or explicitly list compartment OCIDs to scan only those
+    compartments: []
+
+  # Optional: add more tenancies
+  # - name: another-tenancy
+  #   region: us-ashburn-1
+  #   tenancy_id: ocid1.tenancy.oc1..yyyyyy
+  #   user_id: ocid1.user.oc1..yyyyyy
+  #   fingerprint: "11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00"
+  #   private_key_path: /etc/oci-sd/keys/api_key_2.pem
+  #   passphrase: ""
+  #   compartments: []

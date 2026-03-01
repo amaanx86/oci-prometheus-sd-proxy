@@ -1,0 +1,24 @@
+services:
+  oci-sd-proxy:
+    image: ghcr.io/amaanx86/oci-prometheus-sd-proxy:latest
+    container_name: oci-sd-proxy
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      CONFIG_PATH: /etc/oci-sd/config.yaml
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      SERVER_TOKEN: ${SERVER_TOKEN}
+      DISCOVERY_TAG_KEY: ${DISCOVERY_TAG_KEY:-monitoring}
+      DISCOVERY_TAG_VALUE: ${DISCOVERY_TAG_VALUE:-enabled}
+      DISCOVERY_LINUX_PORT: ${DISCOVERY_LINUX_PORT:-9100}
+      DISCOVERY_WINDOWS_PORT: ${DISCOVERY_WINDOWS_PORT:-9182}
+      DISCOVERY_REFRESH_INTERVAL: ${DISCOVERY_REFRESH_INTERVAL:-5m}
+    volumes:
+      - ${OCI_CONFIG_PATH:-./config.yaml}:/etc/oci-sd/config.yaml:ro
+      - ${OCI_KEYS_PATH:-./oci-keys}:/etc/oci-sd/keys:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
