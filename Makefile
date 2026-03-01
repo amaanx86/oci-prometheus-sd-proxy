@@ -52,13 +52,14 @@ tidy:
 
 # Run locally
 run:
-	@if [ -z "$$SERVER_TOKEN" ]; then \
+	@bash -c 'set -a; [ -f .env ] && . .env; set +a; \
+	if [ -z "$$SERVER_TOKEN" ]; then \
 		echo "Error: SERVER_TOKEN environment variable not set"; \
 		echo "Usage: SERVER_TOKEN=your-token make run"; \
 		exit 1; \
-	fi
-	@echo "Running locally (token: $$SERVER_TOKEN)..."
-	@go run ./cmd/server
+	fi; \
+	echo "Running locally (token: $$SERVER_TOKEN)..."; \
+	go run ./cmd/server'
 
 # Clean build artifacts
 clean:
