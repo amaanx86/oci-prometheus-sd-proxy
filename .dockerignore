@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.github
+
+# CI/CD
+.gitlab-ci.yml
+.github
+.circleci
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Development
+.env
+.env.*
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+.cache
+
+# Build artifacts
+bin/
+dist/
+*.o
+*.a
+*.so
+
+# Test coverage
+coverage.out
+*.cover
+
+# Temp files
+*.tmp
+cmd.out
+
+# Documentation (we don't need it in the image)
+docs/
+README.md
+LICENSE
+CHANGELOG.md
+
+# Makefiles
+Makefile
+
+# Config examples (use actual configs at runtime)
+*.example
+config.yaml
+.env
+
+# Node modules, vendor, etc
+node_modules/
+vendor/
