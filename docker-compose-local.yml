@@ -1,0 +1,39 @@
+services:
+  oci-sd-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+    container_name: oci-sd-proxy
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      # Configuration file path
+      CONFIG_PATH: ${CONFIG_PATH:-/etc/oci-sd/config.yaml}
+
+      # Server settings
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      SERVER_TOKEN: ${SERVER_TOKEN}
+
+      # Discovery settings
+      DISCOVERY_TAG_KEY: ${DISCOVERY_TAG_KEY:-monitoring}
+      DISCOVERY_TAG_VALUE: ${DISCOVERY_TAG_VALUE:-enabled}
+      DISCOVERY_LINUX_PORT: ${DISCOVERY_LINUX_PORT:-9100}
+      DISCOVERY_WINDOWS_PORT: ${DISCOVERY_WINDOWS_PORT:-9182}
+      DISCOVERY_REFRESH_INTERVAL: ${DISCOVERY_REFRESH_INTERVAL:-5m}
+
+    volumes:
+      # Mount OCI config
+      - ${OCI_CONFIG_PATH:-./config.yaml}:/etc/oci-sd/config.yaml:ro
+
+      # Mount OCI PEM keys directory
+      - ${OCI_KEYS_PATH:-./oci-keys}:/etc/oci-sd/keys:ro
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
