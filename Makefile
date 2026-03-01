@@ -30,7 +30,13 @@ test:
 # Lint code
 lint:
 	@echo "Linting code..."
-	@golangci-lint run ./...
+	@if command -v golangci-lint > /dev/null; then \
+		golangci-lint run ./...; \
+	else \
+		echo "golangci-lint not installed"; \
+		echo "Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		exit 1; \
+	fi
 
 # Build Docker image
 docker:
