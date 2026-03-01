@@ -15,7 +15,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     -o /bin/oci-sd-proxy \
     ./cmd/server
 
-#FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot
 
 # Metadata labels
 LABEL org.opencontainers.image.title="oci-prometheus-sd-proxy" \
