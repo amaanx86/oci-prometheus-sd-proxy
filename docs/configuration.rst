@@ -36,6 +36,9 @@ All configuration can be set via environment variables:
    * - ``DISCOVERY_REFRESH_INTERVAL``
      - 5m
      - How often to poll OCI APIs
+   * - ``DISCOVERY_RATE_LIMIT_RPS``
+     - 10.0
+     - OCI API rate limit (requests/sec per tenancy)
 
 config.yaml
 -----------
@@ -54,6 +57,7 @@ Main configuration file with OCI tenancy credentials:
       linux_port: 9100
       windows_port: 9182
       refresh_interval: 5m
+      rate_limit_rps: 10.0
 
     tenancies:
       - name: my-tenancy
@@ -85,6 +89,9 @@ Fields
 
 **discovery.refresh_interval**
     Background cache refresh interval (e.g., ``5m``, ``30s``)
+
+**discovery.rate_limit_rps**
+    OCI API rate limit in requests per second per tenancy. Prevents 429 TooManyRequests errors by proactively throttling requests. Combined with automatic retry policy for transient failures. (default: ``10.0``)
 
 **tenancies[]**
     List of OCI tenancies to discover from
