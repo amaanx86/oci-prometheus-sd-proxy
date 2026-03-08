@@ -60,6 +60,7 @@ All settings are in `.env`:
 | `DISCOVERY_LINUX_PORT` | 9100 | node_exporter port |
 | `DISCOVERY_WINDOWS_PORT` | 9182 | windows_exporter port |
 | `DISCOVERY_REFRESH_INTERVAL` | 5m | Poll interval |
+| `DISCOVERY_RATE_LIMIT_RPS` | 10.0 | OCI API requests per second per tenancy |
 
 ## File Structure
 

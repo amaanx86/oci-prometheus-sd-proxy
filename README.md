@@ -72,8 +72,25 @@ Complete documentation available at: **https://oci-prometheus-sd-proxy.readthedo
 - **Tag-based filtering**: Only scrape instances with configured tags
 - **Rich labels**: Tenancy, compartment, shape, region, and all custom tags
 - **Fast discovery**: Parallel compartment scanning with caching
+- **Rate limiting**: Proactive token bucket + reactive retry policy prevent 429 errors
 - **Secure**: Bearer token auth, distroless image, read-only config mounts
 - **Production-ready**: JSON logging, health probes, configurable refresh
+
+## Configuration
+
+All configuration is provided via YAML file with environment variable overrides:
+
+**Discovery Settings** (in `config.yaml` discovery section or env vars):
+- `tag_key` / `DISCOVERY_TAG_KEY` - OCI tag key for filtering (default: `monitoring`)
+- `tag_value` / `DISCOVERY_TAG_VALUE` - OCI tag value for filtering (default: `enabled`)
+- `linux_port` / `DISCOVERY_LINUX_PORT` - Node exporter port (default: `9100`)
+- `windows_port` / `DISCOVERY_WINDOWS_PORT` - Windows exporter port (default: `9182`)
+- `refresh_interval` / `DISCOVERY_REFRESH_INTERVAL` - Discovery poll interval (default: `5m`)
+- `rate_limit_rps` / `DISCOVERY_RATE_LIMIT_RPS` - OCI API rate limit in requests/sec per tenancy (default: `10.0`)
+
+**Server Settings**:
+- `port` / `SERVER_PORT` - HTTP server port (default: `8080`)
+- `token` / `SERVER_TOKEN` - Bearer token for API authentication (**required**)
 
 ## API Endpoints
 
