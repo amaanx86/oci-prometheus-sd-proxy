@@ -8,11 +8,12 @@ server:
   token: "change-me-use-env-var-in-prod"
 
 discovery:
-  tag_key: monitoring           # OCI freeform tag key to filter instances
-  tag_value: enabled            # OCI freeform tag value to filter instances
-  linux_port: 9100              # node_exporter default port
-  windows_port: 9182            # windows_exporter default port
-  refresh_interval: 5m           # how often to poll OCI APIs for new instances
+  tag_key: monitoring             # OCI freeform tag key to filter instances
+  tag_value: enabled              # OCI freeform tag value to filter instances
+  linux_port: 9100                # node_exporter default port
+  windows_port: 9182              # windows_exporter default port
+  refresh_interval: 5m            # how often to poll OCI APIs for new instances
+  rate_limit_rps: 10.0            # max OCI API requests per second per tenancy
 
 tenancies:
   - name: my-tenancy

@@ -31,6 +31,7 @@ type DiscoveryConfig struct {
 	LinuxPort       int           `yaml:"linux_port"`
 	WindowsPort     int           `yaml:"windows_port"`
 	RefreshInterval time.Duration `yaml:"refresh_interval"`
+	RateLimitRPS    float64       `yaml:"rate_limit_rps"`
 }
 
 // TenancyConfig holds OCI tenancy credentials and scope.
@@ -56,6 +57,7 @@ func defaults() *Config {
 			LinuxPort:       9100,
 			WindowsPort:     9182,
 			RefreshInterval: 5 * time.Minute,
+			RateLimitRPS:    10.0,
 		},
 	}
 }
@@ -113,6 +115,13 @@ func Load() (*Config, error) {
 			return nil, fmt.Errorf("invalid DISCOVERY_REFRESH_INTERVAL %q: %w", v, err)
 		}
 		cfg.Discovery.RefreshInterval = d
+	}
+	if v := os.Getenv("DISCOVERY_RATE_LIMIT_RPS"); v != "" {
+		rps, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid DISCOVERY_RATE_LIMIT_RPS %q: %w", v, err)
+		}
+		cfg.Discovery.RateLimitRPS = rps
 	}
 
 	if err := cfg.validate(); err != nil {

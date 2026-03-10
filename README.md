@@ -72,6 +72,7 @@ Complete documentation available at: **https://oci-prometheus-sd-proxy.readthedo
 - **Tag-based filtering**: Only scrape instances with configured tags
 - **Rich labels**: Tenancy, compartment, shape, region, and all custom tags
 - **Fast discovery**: Parallel compartment scanning with caching
+- **Rate limiting**: Proactive token bucket + reactive retry policy prevent 429 errors
 - **Secure**: Bearer token auth, distroless image, read-only config mounts
 - **Production-ready**: JSON logging, health probes, configurable refresh
 

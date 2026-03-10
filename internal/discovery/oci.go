@@ -10,9 +10,21 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/core"
 	"github.com/oracle/oci-go-sdk/v65/identity"
+	"golang.org/x/time/rate"
 
 	"github.com/amaanx86/oci-prometheus-sd-proxy/internal/config"
 )
+
+// tenancyDiscoverer holds shared state for discovering a single tenancy.
+type tenancyDiscoverer struct {
+	cfg     *config.Config
+	tenancy config.TenancyConfig
+	compute core.ComputeClient
+	net     core.VirtualNetworkClient
+	id      identity.IdentityClient
+	limiter *rate.Limiter
+	retry   common.RetryPolicy
+}
 
 // discoverTenancy returns all matching target groups from a single OCI tenancy.
 // Errors from individual compartments are logged and skipped rather than failing
@@ -52,23 +64,47 @@ func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.Ten
 		return nil, fmt.Errorf("create identity client for tenancy %q: %w", tenancy.Name, err)
 	}
 
+	// Create rate limiter with burst equal to burst for this tenancy
+	rps := cfg.Discovery.RateLimitRPS
+	burst := int(rps)
+	if burst < 1 {
+		burst = 1
+	}
+	limiter := rate.NewLimiter(rate.Limit(rps), burst)
+
+	d := &tenancyDiscoverer{
+		cfg:     cfg,
+		tenancy: tenancy,
+		compute: computeClient,
+		net:     netClient,
+		id:      identityClient,
+		limiter: limiter,
+		retry:   common.DefaultRetryPolicy(),
+	}
+
+	return d.discover(ctx)
+}
+
+// discover is the main entry point for the tenancyDiscoverer, orchestrating
+// compartment discovery and target group discovery.
+func (d *tenancyDiscoverer) discover(ctx context.Context) ([]TargetGroup, error) {
 	// Determine which compartments to scan
-	compartmentsToScan := tenancy.Compartments
+	compartmentsToScan := d.tenancy.Compartments
 
 	// If no compartments explicitly configured, auto-discover all compartments in the tenancy
 	if len(compartmentsToScan) == 0 {
-		discovered, err := listAllCompartments(ctx, identityClient, tenancy.TenancyID)
+		discovered, err := d.listAllCompartments(ctx, d.tenancy.TenancyID)
 		if err != nil {
 			slog.Warn("failed to auto-discover compartments - falling back to root",
-				"tenancy", tenancy.Name,
+				"tenancy", d.tenancy.Name,
 				"error", err,
 			)
 			// Fallback to root compartment (tenancy OCID)
-			compartmentsToScan = []string{tenancy.TenancyID}
+			compartmentsToScan = []string{d.tenancy.TenancyID}
 		} else {
 			compartmentsToScan = discovered
 			slog.Info("auto-discovered compartments",
-				"tenancy", tenancy.Name,
+				"tenancy", d.tenancy.Name,
 				"count", len(discovered),
 			)
 		}
@@ -76,10 +112,10 @@ func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.Ten
 
 	var groups []TargetGroup
 	for _, compartmentID := range compartmentsToScan {
-		cGroups, err := discoverCompartment(ctx, cfg, tenancy, computeClient, netClient, compartmentID)
+		cGroups, err := d.discoverCompartment(ctx, compartmentID)
 		if err != nil {
 			slog.Warn("compartment discovery failed - skipping",
-				"tenancy", tenancy.Name,
+				"tenancy", d.tenancy.Name,
 				"compartment_id", compartmentID,
 				"error", err,
 			)
@@ -92,42 +128,35 @@ func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.Ten
 
 // discoverCompartment lists all running instances in a compartment that match
 // the configured tag filter and builds a TargetGroup for each.
-func discoverCompartment(
-	ctx context.Context,
-	cfg *config.Config,
-	tenancy config.TenancyConfig,
-	computeClient core.ComputeClient,
-	netClient core.VirtualNetworkClient,
-	compartmentID string,
-) ([]TargetGroup, error) {
-	instances, err := listAllInstances(ctx, computeClient, compartmentID)
+func (d *tenancyDiscoverer) discoverCompartment(ctx context.Context, compartmentID string) ([]TargetGroup, error) {
+	instances, err := d.listAllInstances(ctx, compartmentID)
 	if err != nil {
 		return nil, fmt.Errorf("list instances in compartment %q: %w", compartmentID, err)
 	}
 
 	var groups []TargetGroup
 	for _, instance := range instances {
-		if !hasTag(instance, cfg.Discovery.TagKey, cfg.Discovery.TagValue) {
+		if !hasTag(instance, d.cfg.Discovery.TagKey, d.cfg.Discovery.TagValue) {
 			continue
 		}
 
-		privateIP, err := getPrimaryPrivateIP(ctx, computeClient, netClient, compartmentID, *instance.Id)
+		privateIP, err := d.getPrimaryPrivateIP(ctx, compartmentID, *instance.Id)
 		if err != nil {
 			slog.Warn("could not resolve private IP - skipping instance",
-				"tenancy", tenancy.Name,
+				"tenancy", d.tenancy.Name,
 				"instance_id", *instance.Id,
 				"error", err,
 			)
 			continue
 		}
 
-		port := cfg.Discovery.LinuxPort
+		port := d.cfg.Discovery.LinuxPort
 		if isWindows(instance) {
-			port = cfg.Discovery.WindowsPort
+			port = d.cfg.Discovery.WindowsPort
 		}
 
 		target := fmt.Sprintf("%s:%d", privateIP, port)
-		labels := buildLabels(tenancy, compartmentID, instance, privateIP)
+		labels := buildLabels(d.tenancy, compartmentID, instance, privateIP)
 
 		groups = append(groups, TargetGroup{
 			Targets: []string{target},
@@ -138,16 +167,22 @@ func discoverCompartment(
 }
 
 // listAllInstances pages through all RUNNING instances in a compartment.
-func listAllInstances(ctx context.Context, client core.ComputeClient, compartmentID string) ([]core.Instance, error) {
+func (d *tenancyDiscoverer) listAllInstances(ctx context.Context, compartmentID string) ([]core.Instance, error) {
 	var instances []core.Instance
 	var page *string
 
 	for {
-		resp, err := client.ListInstances(ctx, core.ListInstancesRequest{
+		if err := d.limiter.Wait(ctx); err != nil {
+			return nil, err
+		}
+		resp, err := d.compute.ListInstances(ctx, core.ListInstancesRequest{
 			CompartmentId:  common.String(compartmentID),
 			LifecycleState: core.InstanceLifecycleStateRunning,
 			Limit:          common.Int(100),
 			Page:           page,
+			RequestMetadata: common.RequestMetadata{
+				RetryPolicy: &d.retry,
+			},
 		})
 		if err != nil {
 			return nil, err
@@ -163,7 +198,7 @@ func listAllInstances(ctx context.Context, client core.ComputeClient, compartmen
 
 // listAllCompartments recursively lists all child compartments under a parent compartment.
 // Starts from the root (tenancy) compartment and discovers the full tree.
-func listAllCompartments(ctx context.Context, client identity.IdentityClient, rootCompartmentID string) ([]string, error) {
+func (d *tenancyDiscoverer) listAllCompartments(ctx context.Context, rootCompartmentID string) ([]string, error) {
 	var allCompartments []string
 	var queue []string
 
@@ -184,12 +219,18 @@ func listAllCompartments(ctx context.Context, client identity.IdentityClient, ro
 		// List child compartments of current compartment
 		var page *string
 		for {
-			resp, err := client.ListCompartments(ctx, identity.ListCompartmentsRequest{
+			if err := d.limiter.Wait(ctx); err != nil {
+				return nil, err
+			}
+			resp, err := d.id.ListCompartments(ctx, identity.ListCompartmentsRequest{
 				CompartmentId:          common.String(current),
 				AccessLevel:            identity.ListCompartmentsAccessLevelAccessible,
 				CompartmentIdInSubtree: common.Bool(false), // direct children only
 				Limit:                  common.Int(100),
 				Page:                   page,
+				RequestMetadata: common.RequestMetadata{
+					RetryPolicy: &d.retry,
+				},
 			})
 			if err != nil {
 				slog.Warn("failed to list child compartments",
@@ -218,19 +259,20 @@ func listAllCompartments(ctx context.Context, client identity.IdentityClient, ro
 }
 
 // getPrimaryPrivateIP returns the private IP of the primary VNIC for an instance.
-func getPrimaryPrivateIP(
-	ctx context.Context,
-	computeClient core.ComputeClient,
-	netClient core.VirtualNetworkClient,
-	compartmentID, instanceID string,
-) (string, error) {
+func (d *tenancyDiscoverer) getPrimaryPrivateIP(ctx context.Context, compartmentID, instanceID string) (string, error) {
 	var page *string
 
 	for {
-		resp, err := computeClient.ListVnicAttachments(ctx, core.ListVnicAttachmentsRequest{
+		if err := d.limiter.Wait(ctx); err != nil {
+			return "", err
+		}
+		resp, err := d.compute.ListVnicAttachments(ctx, core.ListVnicAttachmentsRequest{
 			CompartmentId: common.String(compartmentID),
 			InstanceId:    common.String(instanceID),
 			Page:          page,
+			RequestMetadata: common.RequestMetadata{
+				RetryPolicy: &d.retry,
+			},
 		})
 		if err != nil {
 			return "", fmt.Errorf("list VNIC attachments: %w", err)
@@ -244,8 +286,14 @@ func getPrimaryPrivateIP(
 				continue
 			}
 
-			vnicResp, err := netClient.GetVnic(ctx, core.GetVnicRequest{
+			if err := d.limiter.Wait(ctx); err != nil {
+				return "", err
+			}
+			vnicResp, err := d.net.GetVnic(ctx, core.GetVnicRequest{
 				VnicId: attachment.VnicId,
+				RequestMetadata: common.RequestMetadata{
+					RetryPolicy: &d.retry,
+				},
 			})
 			if err != nil {
 				slog.Warn("failed to get VNIC details", "vnic_id", *attachment.VnicId, "error", err)
