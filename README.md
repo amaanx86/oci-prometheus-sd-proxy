@@ -48,11 +48,23 @@ scrape_configs:
         authorization:
           type: Bearer
           credentials: 'YOUR_TOKEN'
+        refresh_interval: 60s
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
     relabel_configs:
       - source_labels: [__meta_oci_instance_name]
         target_label: instance
       - source_labels: [__meta_oci_tenancy_name]
         target_label: tenancy
+      - source_labels: [__meta_oci_compartment_name]
+        target_label: compartment
+      - source_labels: [__meta_oci_region]
+        target_label: region
+      - source_labels: [__meta_oci_availability_domain]
+        target_label: availability_domain
+      - source_labels: [__meta_oci_instance_shape]
+        target_label: shape
 ```
 
 ## Full Documentation
