@@ -15,6 +15,10 @@ Add HTTP SD configuration to your ``prometheus.yml``:
             authorization:
               type: Bearer
               credentials: 'YOUR_SERVER_TOKEN'
+            refresh_interval: 60s
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        metrics_path: /metrics
 
 Relabeling
 ----------
@@ -37,11 +41,11 @@ Map OCI metadata to Prometheus labels:
         target_label: region
 
       # Compartment
-      - source_labels: [__meta_oci_compartment_id]
+      - source_labels: [__meta_oci_compartment_name]
         target_label: compartment
 
       # Shape
-      - source_labels: [__meta_oci_shape]
+      - source_labels: [__meta_oci_instance_shape]
         target_label: shape
 
       # Availability domain
@@ -56,11 +60,12 @@ All discovered instances include these labels:
 - ``__meta_oci_instance_name`` - Instance name
 - ``__meta_oci_instance_id`` - Instance OCID
 - ``__meta_oci_instance_state`` - RUNNING, STOPPED, etc.
+- ``__meta_oci_instance_shape`` - Instance shape (e.g., VM.Standard.E6.Flex)
 - ``__meta_oci_tenancy_name`` - Tenancy name
 - ``__meta_oci_tenancy_id`` - Tenancy OCID
 - ``__meta_oci_region`` - OCI region
+- ``__meta_oci_compartment_name`` - Compartment name
 - ``__meta_oci_compartment_id`` - Compartment OCID
-- ``__meta_oci_shape`` - Instance shape (e.g., VM.Standard.E6.Flex)
 - ``__meta_oci_availability_domain`` - AD name
 - ``__meta_oci_fault_domain`` - Fault domain
 - ``__meta_oci_image_id`` - Image OCID
