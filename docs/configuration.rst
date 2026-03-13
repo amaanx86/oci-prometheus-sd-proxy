@@ -87,6 +87,22 @@ Fields
 **discovery.windows_port**
     Port for Windows Prometheus exporters (default: windows_exporter on 9182)
 
+.. note::
+
+   **Windows OS detection** - the proxy selects the port using this priority order:
+
+   1. OCI freeform tag ``os = windows`` on the instance (highest priority)
+   2. Instance display name contains ``win`` (e.g. ``win-server-01``, ``windows-web``)
+   3. Everything else defaults to ``linux_port`` (9100)
+
+   If a Windows VM has no ``os`` tag and no ``win`` in its display name, it will be
+   targeted on port 9100. To avoid this, either set the freeform tag ``os = windows``
+   on the OCI instance, or ensure ``win`` appears in the VM display name.
+
+   When installing ``windows_exporter`` via the MSI installer, configure it to listen
+   on port 9182 (the default). If you prefer port 9100 for Windows, set that in the
+   MSI installer and update ``windows_port`` in this config to match.
+
 **discovery.refresh_interval**
     Background cache refresh interval (e.g., ``5m``, ``30s``)
 
