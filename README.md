@@ -78,6 +78,29 @@ Complete documentation available at: **https://oci-prometheus-sd-proxy.readthedo
 - Security best practices
 - API reference
 
+## Windows Instances - Port Selection
+
+The proxy needs to know whether an instance is Linux or Windows to pick the right exporter port:
+
+| OS | Default Port | Exporter |
+|----|-------------|----------|
+| Linux | `9100` | [node_exporter](https://github.com/prometheus/node_exporter) |
+| Windows | `9182` | [windows_exporter](https://github.com/prometheus-community/windows_exporter) |
+
+**Detection order** (first match wins):
+
+1. Freeform tag `os` = `windows` on the OCI instance
+2. VM display name contains `win` (e.g. `win-server-01`, `windows-web`)
+3. Everything else defaults to port `9100`
+
+**Recommended approach for Windows instances:**
+
+Set the freeform tag `os = windows` on the OCI instance, or make sure `win` appears in the VM display name.
+
+When installing `windows_exporter` via the MSI installer, configure it to listen on port `9182` (the default). If you prefer port `9100`, set that in the MSI installer and update `windows_port` in the proxy config to match - or simply leave both at their defaults and rely on the tag/name detection above.
+
+> **Note:** If a Windows VM has no `os` tag and no `win` in its name, the proxy will target it on port `9100`. In that case, either set the tag, rename the VM, or configure `windows_exporter` to listen on port `9100` during MSI installation.
+
 ## Features
 
 - **Multi-tenancy**: Discover instances across any number of OCI tenancies
