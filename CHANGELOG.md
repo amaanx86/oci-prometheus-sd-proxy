@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **OCI IAM policy documentation**: Added required IAM policy statements to README and `docs/installation.rst` covering all five API call families (`read instances`, `read compartments`, `read vnic-attachments`, `read vnics`, `read tag-namespaces`) with per-call mapping table and note on `NotAuthorizedOrNotFound` behavior
+
 - **Canonical refresh log line**: Single `target_refresh_complete` log line per cycle with `cycle_id`, `duration_ms`, `total_groups`, `had_errors`, `tenancies_total`, `tenancies_with_errors`, `compartments_discovered`, `compartments_failed`, `error_tenancies`, `targets_added`, `targets_removed`, `targets_unchanged`
 - **Targets delta tracking**: Each refresh cycle reports how many targets were added, removed, or unchanged compared to the previous cycle, making silent target loss visible
 - **Cycle ID**: Monotonic `cycle_id` field on all refresh-related log lines for correlation across sub-logs
