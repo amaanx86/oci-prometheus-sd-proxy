@@ -414,8 +414,12 @@ func buildLabels(
 // Non-service errors are classified by type so alerting rules can match specific
 // failure modes rather than the catch-all "unknown".
 func extractErrorCode(err error) string {
-	if svcErr, ok := common.IsServiceError(err); ok {
-		return svcErr.GetCode()
+	// IsServiceError uses a direct type assertion so it misses wrapped errors.
+	// Walk the chain manually to handle any SDK wrapping.
+	for e := err; e != nil; e = errors.Unwrap(e) {
+		if svcErr, ok := common.IsServiceError(e); ok {
+			return svcErr.GetCode()
+		}
 	}
 	if errors.Is(err, context.Canceled) {
 		return "context_canceled"
