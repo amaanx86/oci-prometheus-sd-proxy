@@ -67,6 +67,20 @@ scrape_configs:
         target_label: shape
 ```
 
+## OCI IAM Policy
+
+The OCI user or group used by this service requires the following IAM policies in each tenancy:
+
+```
+Allow group <group-name> to read instances in tenancy
+Allow group <group-name> to read compartments in tenancy
+Allow group <group-name> to read vnic-attachments in tenancy
+Allow group <group-name> to read vnics in tenancy
+Allow group <group-name> to read tag-namespaces in tenancy
+```
+
+Replace `<group-name>` with the OCI group that contains the API key user. These policies cover compartment auto-discovery, instance listing, VNIC resolution, and tag-based filtering. Missing any of these will result in `NotAuthorizedOrNotFound` errors in the logs.
+
 ## Full Documentation
 
 Complete documentation available at: **https://oci-prometheus-sd-proxy.readthedocs.io/**

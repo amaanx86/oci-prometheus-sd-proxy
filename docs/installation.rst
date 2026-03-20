@@ -59,10 +59,45 @@ Before running the service:
 
 2. **Create API credentials** for each OCI tenancy:
 
-   - Generate API key pair
-   - User must have permissions:
-     - ``inspect instance-family`` on all compartments
-     - ``inspect virtual-network-family`` on all compartments
+   - Generate an API key pair in OCI Console under **Identity > Users > API Keys**
+   - Add the user to an OCI group and attach the following IAM policies to that group in each tenancy:
+
+   .. code-block:: text
+
+       Allow group <group-name> to read instances in tenancy
+       Allow group <group-name> to read compartments in tenancy
+       Allow group <group-name> to read vnic-attachments in tenancy
+       Allow group <group-name> to read vnics in tenancy
+       Allow group <group-name> to read tag-namespaces in tenancy
+
+   Replace ``<group-name>`` with the OCI group containing your API key user. These five policies cover all API calls the proxy makes:
+
+   .. list-table::
+      :header-rows: 1
+      :widths: 20 30 30
+
+      * - OCI Service
+        - API Call
+        - Policy Required
+      * - Identity
+        - ``ListCompartments``
+        - ``read compartments``
+      * - Compute
+        - ``ListInstances``
+        - ``read instances``
+      * - Compute
+        - ``ListVnicAttachments``
+        - ``read vnic-attachments``
+      * - Networking
+        - ``GetVnic``
+        - ``read vnics``
+      * - Tagging
+        - Tag-based filtering
+        - ``read tag-namespaces``
+
+   .. note::
+
+      Missing any of these policies will cause ``NotAuthorizedOrNotFound`` errors in the logs for the affected compartments. The proxy will continue serving other tenancies and retain stale targets for the affected ones.
 
 3. **Prepare configuration file**:
 
