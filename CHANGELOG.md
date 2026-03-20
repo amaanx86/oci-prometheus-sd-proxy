@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-21
+
+### Added
+
+- **Canonical refresh log line**: Single `target_refresh_complete` log line per cycle with `cycle_id`, `duration_ms`, `total_groups`, `had_errors`, `tenancies_total`, `tenancies_with_errors`, `compartments_discovered`, `compartments_failed`, `error_tenancies`, `targets_added`, `targets_removed`, `targets_unchanged`
+- **Targets delta tracking**: Each refresh cycle reports how many targets were added, removed, or unchanged compared to the previous cycle, making silent target loss visible
+- **Cycle ID**: Monotonic `cycle_id` field on all refresh-related log lines for correlation across sub-logs
+- **Tenancy state transition logging**: `tenancy_discovery_complete` WARN fires only on healthy-to-degraded transition; INFO fires on recovery - persistent failures produce no repeated noise
+
+### Changed
+
+- `target_refresh_complete` emits at WARN level when `had_errors=true`, INFO otherwise - enables log-level-based alerting without custom field matchers
+- Per-compartment `failed to list child compartments` log demoted from WARN to DEBUG - eliminates ~11,500 redundant log lines/day for persistent IAM failures
+- `refreshStats` struct introduced to accumulate per-cycle metrics across all tenancies
+
+### Fixed
+
+- `had_errors=false` on `target_refresh_complete` when compartment-level failures occurred in the same cycle - propagation now flows correctly from compartment stats through tenancy stats to the cycle summary
+- `targets_removed` falsely reported when all tenancies fail and stale cache is retained - delta now reflects what was actually committed to cache, not the theoretical diff
+- Network and TLS errors now classified as `error_code: network_error` instead of `unknown` - `*url.Error` (wraps TLS, DNS, HTTP transport failures) and `*net.OpError` are both detected; context cancellations and deadlines classified as `context_canceled` and `timeout` respectively
+- OCI service error codes (e.g. `NotAuthorizedOrNotFound`) now correctly extracted when wrapped - `extractErrorCode` walks the full error chain instead of using a direct type assertion, fixing cases where the SDK wraps the underlying `servicefailure` type
+
 ## [1.1.0] - 2026-03-10
 
 ### Added
@@ -117,6 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/releases/tag/v1.0.0
