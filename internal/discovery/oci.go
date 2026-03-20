@@ -2,8 +2,11 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/url"
 	"os"
 	"strings"
 
@@ -14,6 +17,14 @@ import (
 
 	"github.com/amaanx86/oci-prometheus-sd-proxy/internal/config"
 )
+
+// tenancyStats holds compartment-level discovery metrics for a single tenancy refresh.
+type tenancyStats struct {
+	compartmentsDiscovered int
+	compartmentsFailed     int
+	hadErrors              bool
+	errorCode              string
+}
 
 // tenancyDiscoverer holds shared state for discovering a single tenancy.
 type tenancyDiscoverer struct {
@@ -29,10 +40,10 @@ type tenancyDiscoverer struct {
 // discoverTenancy returns all matching target groups from a single OCI tenancy.
 // Errors from individual compartments are logged and skipped rather than failing
 // the entire tenancy, so a partial result is always returned.
-func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.TenancyConfig) ([]TargetGroup, error) {
+func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.TenancyConfig) ([]TargetGroup, tenancyStats, error) {
 	keyContent, err := os.ReadFile(tenancy.PrivateKeyPath)
 	if err != nil {
-		return nil, fmt.Errorf("read private key for tenancy %q: %w", tenancy.Name, err)
+		return nil, tenancyStats{}, fmt.Errorf("read private key for tenancy %q: %w", tenancy.Name, err)
 	}
 
 	var passphrase *string
@@ -51,17 +62,17 @@ func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.Ten
 
 	computeClient, err := core.NewComputeClientWithConfigurationProvider(provider)
 	if err != nil {
-		return nil, fmt.Errorf("create compute client for tenancy %q: %w", tenancy.Name, err)
+		return nil, tenancyStats{}, fmt.Errorf("create compute client for tenancy %q: %w", tenancy.Name, err)
 	}
 
 	netClient, err := core.NewVirtualNetworkClientWithConfigurationProvider(provider)
 	if err != nil {
-		return nil, fmt.Errorf("create network client for tenancy %q: %w", tenancy.Name, err)
+		return nil, tenancyStats{}, fmt.Errorf("create network client for tenancy %q: %w", tenancy.Name, err)
 	}
 
 	identityClient, err := identity.NewIdentityClientWithConfigurationProvider(provider)
 	if err != nil {
-		return nil, fmt.Errorf("create identity client for tenancy %q: %w", tenancy.Name, err)
+		return nil, tenancyStats{}, fmt.Errorf("create identity client for tenancy %q: %w", tenancy.Name, err)
 	}
 
 	// Create rate limiter with burst equal to burst for this tenancy
@@ -87,7 +98,7 @@ func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.Ten
 
 // discover is the main entry point for the tenancyDiscoverer, orchestrating
 // compartment discovery and target group discovery.
-func (d *tenancyDiscoverer) discover(ctx context.Context) ([]TargetGroup, error) {
+func (d *tenancyDiscoverer) discover(ctx context.Context) ([]TargetGroup, tenancyStats, error) {
 	// Determine which compartments to scan
 	compartmentsToScan := d.tenancy.Compartments
 
@@ -110,20 +121,34 @@ func (d *tenancyDiscoverer) discover(ctx context.Context) ([]TargetGroup, error)
 		}
 	}
 
-	var groups []TargetGroup
+	var (
+		groups []TargetGroup
+		stats  tenancyStats
+	)
+
 	for _, compartmentID := range compartmentsToScan {
 		cGroups, err := d.discoverCompartment(ctx, compartmentID)
 		if err != nil {
-			slog.Warn("compartment discovery failed - skipping",
+			slog.Debug("compartment discovery failed - skipping",
 				"tenancy", d.tenancy.Name,
 				"compartment_id", compartmentID,
 				"error", err,
 			)
+			if stats.errorCode == "" {
+				stats.errorCode = extractErrorCode(err)
+			}
+			stats.compartmentsFailed++
 			continue
 		}
+		stats.compartmentsDiscovered++
 		groups = append(groups, cGroups...)
 	}
-	return groups, nil
+
+	if stats.compartmentsFailed > 0 {
+		stats.hadErrors = true
+	}
+
+	return groups, stats, nil
 }
 
 // discoverCompartment lists all running instances in a compartment that match
@@ -233,7 +258,7 @@ func (d *tenancyDiscoverer) listAllCompartments(ctx context.Context, rootCompart
 				},
 			})
 			if err != nil {
-				slog.Warn("failed to list child compartments",
+				slog.Debug("failed to list child compartments",
 					"parent_compartment_id", current,
 					"error", err,
 				)
@@ -382,6 +407,35 @@ func buildLabels(
 	}
 
 	return labels
+}
+
+// extractErrorCode classifies an error into a loggable code.
+// OCI service errors return their HTTP error code (e.g. NotAuthorizedOrNotFound).
+// Non-service errors are classified by type so alerting rules can match specific
+// failure modes rather than the catch-all "unknown".
+func extractErrorCode(err error) string {
+	// IsServiceError uses a direct type assertion so it misses wrapped errors.
+	// Walk the chain manually to handle any SDK wrapping.
+	for e := err; e != nil; e = errors.Unwrap(e) {
+		if svcErr, ok := common.IsServiceError(e); ok {
+			return svcErr.GetCode()
+		}
+	}
+	if errors.Is(err, context.Canceled) {
+		return "context_canceled"
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "timeout"
+	}
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		return "network_error"
+	}
+	var netErr *net.OpError
+	if errors.As(err, &netErr) {
+		return "network_error"
+	}
+	return "unknown"
 }
 
 // sanitizeLabelKey converts an arbitrary string to a valid Prometheus label key
