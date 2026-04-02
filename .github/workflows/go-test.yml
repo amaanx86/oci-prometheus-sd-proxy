@@ -3,8 +3,18 @@ name: Go Test & Lint
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
 
 jobs:
   test:
