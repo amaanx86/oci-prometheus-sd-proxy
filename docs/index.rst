@@ -27,7 +27,7 @@ Quick Links
 
 - `GitHub Repository <https://github.com/amaanx86/oci-prometheus-sd-proxy>`_
 - `Docker Image <https://github.com/amaanx86/oci-prometheus-sd-proxy/pkgs/container/oci-prometheus-sd-proxy>`_
-- `License (MIT) <https://github.com/amaanx86/oci-prometheus-sd-proxy/blob/main/LICENSE>`_
+- `License (Apache 2.0) <https://github.com/amaanx86/oci-prometheus-sd-proxy/blob/main/LICENSE>`_
 
 Support
 -------
