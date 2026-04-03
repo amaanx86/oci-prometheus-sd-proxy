@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-04-04
+
+### Changed
+
+- **License**: Switched from MIT to Apache 2.0
+
+### CI
+
+- Skip Go test and lint workflow on changes to `docs/**`, `**.md`, `**.rst`, and `**.txt`
+
 ## [1.2.0] - 2026-03-21
 
 ### Added
@@ -141,7 +151,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/releases/tag/v1.0.0
