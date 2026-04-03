@@ -25,7 +25,7 @@ LABEL org.opencontainers.image.title="oci-prometheus-sd-proxy" \
       org.opencontainers.image.documentation="https://github.com/amaanx86/oci-prometheus-sd-proxy/tree/main/docs" \
       org.opencontainers.image.authors="Amaan Ul Haq Siddiqui <amaanulhaq.s@outlook.com>" \
       org.opencontainers.image.vendor="amaanx86" \
-      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.base.name="gcr.io/distroless/static-debian12:nonroot"
 
