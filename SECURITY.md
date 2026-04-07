@@ -4,9 +4,10 @@
 
 Do not open a GitHub issue to report security vulnerabilities.
 
-If you believe you have found a security vulnerability, please report it directly to:
+If you believe you have found a security vulnerability, you can report it privately via either of these channels:
 
-**Email**: [amaanulhaq.s@outlook.com](mailto:amaanulhaq.s@outlook.com)
+- **GitHub**: use [Report a vulnerability](https://github.com/amaanx86/oci-prometheus-sd-proxy/security/advisories/new) (preferred)
+- **Email**: [amaanulhaq.s@outlook.com](mailto:amaanulhaq.s@outlook.com)
 
 Include the following in your report:
 
