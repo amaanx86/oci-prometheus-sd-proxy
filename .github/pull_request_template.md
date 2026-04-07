@@ -13,8 +13,11 @@ Fixes #(issue)
 
 ## Testing
 
-- [ ] `make test` passes
-- [ ] Manual testing completed
+**New or changed functionality requires automated tests** (see [CONTRIBUTING.md](../CONTRIBUTING.md#testing)).
+
+- [ ] `make test` passes (`go test -race -cover ./...`)
+- [ ] New/changed code has corresponding test cases in `*_test.go`
+- [ ] If OCI-calling code was changed, manual integration testing completed
 
 **Test details:**
 - Go version:
@@ -25,6 +28,6 @@ Fixes #(issue)
 - [ ] `make lint` passes
 - [ ] Self-review completed
 - [ ] Comments added for complex logic
-- [ ] Documentation updated
-- [ ] Tests added or updated
+- [ ] Documentation updated (CONTRIBUTING.md, README if needed)
+- [ ] Tests added or updated for all new functionality
 - [ ] All CI checks pass
