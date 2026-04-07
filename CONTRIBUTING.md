@@ -60,11 +60,49 @@ git config commit.gpgsign true
 
 ## Testing
 
-All new features must include tests:
+**Policy: all new functionality and bug fixes must include automated tests.**
+This requirement applies to every pull request - PRs that add code without
+corresponding tests will not be merged.
+
+Run the full test suite (with race detector and coverage):
 
 ```bash
 make test
+# equivalent to: go test -race -cover ./...
 ```
+
+Run a single package:
+
+```bash
+go test -race -run TestFunctionName ./internal/discovery/
+```
+
+### What to test
+
+| Area | Location | Notes |
+|------|----------|-------|
+| Config loading and validation | `internal/config/` | Table-driven, use `t.TempDir()` for temp files |
+| Middleware (auth, logging) | `internal/middleware/` | Use `httptest.NewRequest` / `httptest.NewRecorder` |
+| HTTP handler | `internal/handler/` | Mock `TargetCache` interface |
+| Discovery pure functions | `internal/discovery/` | `hasTag`, `isWindows`, `buildLabels`, `sanitizeLabelKey`, `extractErrorCode` |
+| Cache utilities | `internal/discovery/` | `targetSet`, `computeDelta`, `Get`, `LastError` |
+| Server routing | `internal/server/` | Use `httptest.NewServer` |
+
+OCI API-calling methods (`discoverTenancy`, `discover`, `discoverCompartment`,
+`listAllInstances`, `listAllCompartments`, `getPrimaryPrivateIP`) require live
+OCI credentials and are excluded from unit testing. Integration tests for these
+functions belong in a separate `_integration_test.go` file and are skipped by
+default with a build tag.
+
+### Coverage
+
+We target >= 60% statement coverage overall. The hard floor per package is:
+
+- `internal/config` - 90%+
+- `internal/middleware` - 100%
+- `internal/handler` - 100%
+- `internal/server` - 100%
+- `internal/discovery` - 40%+ (limited by OCI SDK boundary)
 
 ## Building
 
