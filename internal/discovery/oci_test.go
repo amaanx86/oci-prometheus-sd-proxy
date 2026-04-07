@@ -182,19 +182,19 @@ func TestBuildLabels_CoreLabelsPresent(t *testing.T) {
 	labels := buildLabels(tenancy, "ocid1.compartment.oc1..comp", inst, "10.0.0.5")
 
 	required := map[string]string{
-		"__meta_oci_tenancy_name":   "prod",
-		"__meta_oci_tenancy_id":     "ocid1.tenancy.oc1..prod",
-		"__meta_oci_region":         "us-ashburn-1",
-		"__meta_oci_compartment_id": "ocid1.compartment.oc1..comp",
-		"__meta_oci_private_ip":     "10.0.0.5",
-		"__meta_oci_instance_state": "RUNNING",
-		"__meta_oci_instance_id":    "ocid1.instance.oc1..test",
-		"__meta_oci_instance_name":  "test-instance",
-		"__meta_oci_display_name":   "test-instance",
-		"__meta_oci_shape":          "VM.Standard.E4.Flex",
+		"__meta_oci_tenancy_name":        "prod",
+		"__meta_oci_tenancy_id":          "ocid1.tenancy.oc1..prod",
+		"__meta_oci_region":              "us-ashburn-1",
+		"__meta_oci_compartment_id":      "ocid1.compartment.oc1..comp",
+		"__meta_oci_private_ip":          "10.0.0.5",
+		"__meta_oci_instance_state":      "RUNNING",
+		"__meta_oci_instance_id":         "ocid1.instance.oc1..test",
+		"__meta_oci_instance_name":       "test-instance",
+		"__meta_oci_display_name":        "test-instance",
+		"__meta_oci_shape":               "VM.Standard.E4.Flex",
 		"__meta_oci_availability_domain": "AD-1",
-		"__meta_oci_fault_domain":   "FAULT-DOMAIN-1",
-		"__meta_oci_image_id":       "ocid1.image.oc1..img",
+		"__meta_oci_fault_domain":        "FAULT-DOMAIN-1",
+		"__meta_oci_image_id":            "ocid1.image.oc1..img",
 	}
 
 	for key, want := range required {
@@ -242,15 +242,15 @@ func TestBuildLabels_FreeformTagKeySanitized(t *testing.T) {
 func TestBuildLabels_NilOptionalFields(t *testing.T) {
 	tenancy := config.TenancyConfig{Name: "t", TenancyID: "tid", Region: "r"}
 	inst := core.Instance{
-		Id:             nil,
-		DisplayName:    nil,
-		Shape:          nil,
+		Id:                 nil,
+		DisplayName:        nil,
+		Shape:              nil,
 		AvailabilityDomain: nil,
-		FaultDomain:    nil,
-		ImageId:        nil,
-		LifecycleState: core.InstanceLifecycleStateRunning,
-		FreeformTags:   map[string]string{},
-		DefinedTags:    map[string]map[string]interface{}{},
+		FaultDomain:        nil,
+		ImageId:            nil,
+		LifecycleState:     core.InstanceLifecycleStateRunning,
+		FreeformTags:       map[string]string{},
+		DefinedTags:        map[string]map[string]interface{}{},
 	}
 	// Should not panic on nil pointer fields
 	labels := buildLabels(tenancy, "comp", inst, "10.0.0.1")
@@ -424,19 +424,19 @@ func TestBuildLabels_MultipleFreeformTagsSanitized(t *testing.T) {
 	tenancy := config.TenancyConfig{Name: "t", TenancyID: "tid", Region: "r"}
 	inst := makeInstance(func(i *core.Instance) {
 		i.FreeformTags = map[string]string{
-			"My.Tag":       "v1",
-			"Another-Tag":  "v2",
-			"simple":       "v3",
-			"123numeric":   "v4",
+			"My.Tag":      "v1",
+			"Another-Tag": "v2",
+			"simple":      "v3",
+			"123numeric":  "v4",
 		}
 	})
 	labels := buildLabels(tenancy, "comp", inst, "10.0.0.1")
 
 	expected := map[string]string{
-		"__meta_oci_tag_my_tag":     "v1",
+		"__meta_oci_tag_my_tag":      "v1",
 		"__meta_oci_tag_another_tag": "v2",
-		"__meta_oci_tag_simple":     "v3",
-		"__meta_oci_tag_123numeric": "v4",
+		"__meta_oci_tag_simple":      "v3",
+		"__meta_oci_tag_123numeric":  "v4",
 	}
 	for key, want := range expected {
 		if got := labels[key]; got != want {
