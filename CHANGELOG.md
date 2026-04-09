@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-04-10
+
+### Added
+
+- **Comprehensive test suite**: Added unit tests for config, discovery, handler, middleware, and server packages
+- **Testing policy docs**: Expanded testing guidance for OpenSSF-aligned practices
+- **Dependabot automation**: Added weekly updates for Go modules and GitHub Actions
+- **Linting policy baseline**: Added `golangci-lint` configuration with `gosec` and `staticcheck`
+
+### Changed
+
+- **Go toolchain**: Upgraded project Go version to `1.26.0` in module metadata
+- **Docker build toolchain**: Updated builder image to `golang:1.26-alpine`
+- **Dependency update**: Bumped `golang.org/x/time` from `v0.5.0` to `v0.15.0`
+
+### CI
+
+- **Workflow upgrade**: Updated `actions/setup-go` from `v4` to `v6`
+- **CI Go version**: Updated workflow `go-version` to `1.26.x`
+- **Action dependency refresh**: Upgraded Docker and security-related GitHub Actions dependencies
+
+### Documentation
+
+- Added private vulnerability reporting guidance in `SECURITY.md`
+- Updated build prerequisites to require Go `1.26` or later in `docs/building.rst`
+
 ## [1.3.0] - 2026-04-04
 
 ### Changed
@@ -151,7 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.0.0...v1.1.0
