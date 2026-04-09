@@ -4,7 +4,7 @@ Building & Development
 Prerequisites
 -------------
 
-- Go 1.22 or later
+- Go 1.26 or later
 - Make
 - Docker (for building container images)
 
