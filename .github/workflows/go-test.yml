@@ -50,5 +50,6 @@ jobs:
       - name: Run linter
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.5.0
+          version: v1.64.8
+          install-mode: goinstall
           args: --timeout=5m
