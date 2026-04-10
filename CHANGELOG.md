@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated release workflow permissions: added `id-token: write` for OIDC and `contents: write` for release asset uploads
 - Added `TUF_TARGET_REPO` env var and `TUF_REPO_TOKEN` secret usage to release workflow
 - Added `provenance` job to release workflow generating SLSA Level 3 container provenance attestations
+- Added CycloneDX SBOM generation via `anchore/sbom-action` - uploaded as a release asset and attested with cosign on every release
 
 ## [1.4.0] - 2026-04-10
 
