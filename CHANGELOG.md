@@ -15,16 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Attach a `release-metadata.json` attestation to each image recording version, digest, commit, and workflow run URL - verifiable with `cosign verify-attestation`
 - Upload `release-metadata.json` as a GitHub release asset for out-of-band verification
 - Publish a signed release verification manifest to the TUF-on-CI repository (`amaanx86/oci-prometheus-sd-proxy-tuf-on-ci`) on each release, enabling TUF-based trust anchoring for release metadata
+- Added SLSA Level 3 provenance attestation for release container images via `slsa-framework/slsa-github-generator`
+- Added CODEOWNERS file requiring maintainer review on all pull requests
+- Added GPG commit verification section to `SECURITY.md` with key ID, fingerprint, algorithm, and keyserver fetch instructions
+- Added vulnerability response SLA to `SECURITY.md`: critical issues fixed within 90 days, all others within 180 days
 
 ### Documentation
 
 - Added `Image Signing and Release Metadata` section to `docs/security.rst` with `cosign verify` and `cosign verify-attestation` commands and OIDC identity constraints
 - Documented TUF-on-CI metadata repository and its role in isolating TUF lifecycle from application source
+- Added `docs/releasing.rst` with end-to-end release process: changelog preparation, `gh release create` with release notes, `tuf-on-ci-sign` workflow, TUF signing keys table, and instructions for delegating signing to a new maintainer
+- Added `releasing` to `docs/index.rst` Development toctree
+- Added `Development` section to `README.md` with `make test`, `make lint`, and `make build` commands
+- Added SLSA Level 3 badge to `README.md`
+- Added zero-warnings policy to `CONTRIBUTING.md`: all lint warnings must be resolved before a PR is merged
 
 ### CI
 
 - Updated release workflow permissions: added `id-token: write` for OIDC and `contents: write` for release asset uploads
 - Added `TUF_TARGET_REPO` env var and `TUF_REPO_TOKEN` secret usage to release workflow
+- Added `provenance` job to release workflow generating SLSA Level 3 container provenance attestations
+- Added CycloneDX SBOM generation via `anchore/sbom-action` - uploaded as a release asset and attested with cosign on every release
 
 ## [1.4.0] - 2026-04-10
 
@@ -196,7 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.1.0...v1.2.0

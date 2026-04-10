@@ -14,7 +14,7 @@ make tidy
 ## Code Style
 
 - Run `gofmt` or `goimports` before committing
-- Run `make lint` to check for issues
+- Run `make lint` to check for issues - zero warnings required, all lint errors must be resolved before a PR is merged
 - Max line length: 100 characters
 - Naming: camelCase for Go identifiers, snake_case for config keys
 - Write tests for new functionality

@@ -16,6 +16,8 @@ jobs:
       contents: write
       packages: write
       id-token: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout repository
@@ -67,6 +69,21 @@ jobs:
         uses: sigstore/cosign-installer@v4.1.1
         with:
           cosign-release: v3.0.6
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-release-assets: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attest SBOM
+        env:
+          COSIGN_EXPERIMENTAL: "false"
+        run: cosign attest --yes --predicate sbom.cyclonedx.json --type cyclonedx "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
 
       - name: Sign published image
         env:
@@ -175,3 +192,17 @@ jobs:
               echo "- No branch pushed (manifest unchanged)."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  provenance:
+    needs: [build-and-push]
+    permissions:
+      actions: read
+      id-token: write
+      packages: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.0.0
+    with:
+      image: ghcr.io/amaanx86/oci-prometheus-sd-proxy
+      digest: ${{ needs.build-and-push.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}

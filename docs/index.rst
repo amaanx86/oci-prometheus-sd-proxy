@@ -21,6 +21,7 @@ A lightweight Go service that discovers compute instances across multiple OCI te
 
    building
    contributing
+   releasing
 
 Quick Links
 -----------
