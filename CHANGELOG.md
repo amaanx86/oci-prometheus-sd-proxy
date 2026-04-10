@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.4.0] - 2025-04-10
+## [1.4.1] - 2026-04-11
+
+### Security
+
+- Sign release images with cosign using GitHub Actions OIDC (keyless signing via Sigstore) on every release
+- Attach a `release-metadata.json` attestation to each image recording version, digest, commit, and workflow run URL - verifiable with `cosign verify-attestation`
+- Upload `release-metadata.json` as a GitHub release asset for out-of-band verification
+- Publish a signed release verification manifest to the TUF-on-CI repository (`amaanx86/oci-prometheus-sd-proxy-tuf-on-ci`) on each release, enabling TUF-based trust anchoring for release metadata
+
+### Documentation
+
+- Added `Image Signing and Release Metadata` section to `docs/security.rst` with `cosign verify` and `cosign verify-attestation` commands and OIDC identity constraints
+- Documented TUF-on-CI metadata repository and its role in isolating TUF lifecycle from application source
+
+### CI
+
+- Updated release workflow permissions: added `id-token: write` for OIDC and `contents: write` for release asset uploads
+- Added `TUF_TARGET_REPO` env var and `TUF_REPO_TOKEN` secret usage to release workflow
+
+## [1.4.0] - 2026-04-10
 
 ### Added
 

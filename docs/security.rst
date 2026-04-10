@@ -17,6 +17,38 @@ Generate a strong token:
 
     openssl rand -hex 32
 
+Image Signing and Release Metadata
+----------------------------------
+
+Release images published to GHCR are signed with cosign using GitHub Actions OIDC.
+The release workflow also publishes a `release-metadata.json` asset and attaches
+the same metadata as a cosign attestation so you can verify the release inputs
+and build provenance separately from the image signature.
+
+Verify a signed image with:
+
+.. code-block:: bash
+
+    cosign verify ghcr.io/amaanx86/oci-prometheus-sd-proxy:latest \
+      --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+      --certificate-identity-regexp '^https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+
+Verify the release metadata attestation with:
+
+.. code-block:: bash
+
+        cosign verify-attestation ghcr.io/amaanx86/oci-prometheus-sd-proxy:latest \
+            --type https://github.com/amaanx86/oci-prometheus-sd-proxy/release-metadata \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp '^https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+
+A separate TUF-on-CI metadata repository is used for release metadata publication:
+
+- `https://github.com/amaanx86/oci-prometheus-sd-proxy-tuf-on-ci`
+
+This keeps TUF metadata lifecycle management isolated from application source code
+while preserving cosign-based image and attestation verification in this repository.
+
 Best Practices
 --------------
 
