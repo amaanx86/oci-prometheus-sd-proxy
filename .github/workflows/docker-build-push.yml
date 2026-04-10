@@ -16,6 +16,8 @@ jobs:
       contents: write
       packages: write
       id-token: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout repository
@@ -175,3 +177,17 @@ jobs:
               echo "- No branch pushed (manifest unchanged)."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  provenance:
+    needs: [build-and-push]
+    permissions:
+      actions: read
+      id-token: write
+      packages: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.0.0
+    with:
+      image: ghcr.io/amaanx86/oci-prometheus-sd-proxy
+      digest: ${{ needs.build-and-push.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
