@@ -17,6 +17,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM gcr.io/distroless/static-debian12:nonroot
 
+ARG VERSION=dev
+
 # Metadata labels
 LABEL org.opencontainers.image.title="oci-prometheus-sd-proxy" \
       org.opencontainers.image.description="Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure" \
