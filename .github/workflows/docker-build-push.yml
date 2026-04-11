@@ -20,29 +20,28 @@ jobs:
       digest: ${{ steps.build.outputs.digest }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4.0.0
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4.1.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from release tag
+      - name: Parse version
         id: version
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Building Docker image version: ${VERSION}"
 
-      - name: Extract metadata
+      - name: Extract image metadata
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v6.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -50,9 +49,9 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
             type=raw,value=latest
 
-      - name: Build and push Docker image
+      - name: Build and push
         id: build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.1.0
         with:
           context: .
           file: ./Dockerfile
@@ -85,7 +84,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "false"
         run: cosign attest --yes --predicate sbom.cyclonedx.json --type cyclonedx "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
 
-      - name: Sign published image
+      - name: Sign image
         env:
           COSIGN_EXPERIMENTAL: "false"
         run: cosign sign --yes "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
@@ -107,7 +106,7 @@ jobs:
           }
           EOF
 
-      - name: Upload release metadata asset
+      - name: Upload release metadata
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "${{ github.event.release.tag_name }}" release-metadata.json --clobber
@@ -117,14 +116,13 @@ jobs:
           COSIGN_EXPERIMENTAL: "false"
         run: cosign attest --yes --predicate release-metadata.json --type https://github.com/amaanx86/oci-prometheus-sd-proxy/release-metadata "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
 
-      - name: Publish verification manifest to TUF repository
+      - name: Publish to TUF signing repository
         id: tuf_publish
         env:
           TUF_REPO_TOKEN: ${{ secrets.TUF_REPO_TOKEN }}
         run: |
           if [ -z "${TUF_REPO_TOKEN}" ]; then
-            echo "TUF_REPO_TOKEN secret is required to publish release verification metadata to ${TUF_TARGET_REPO}." >&2
-            exit 1
+            echo "::error::TUF_REPO_TOKEN is required" && exit 1
           fi
 
           TAG="${{ github.event.release.tag_name }}"
@@ -135,16 +133,19 @@ jobs:
           SAFE_TAG="$(echo "${TAG}" | tr '/' '_')"
           SIGNING_BRANCH="sign/release-${SAFE_VERSION}-${{ github.run_id }}"
           WORKDIR="$(mktemp -d)"
+          WORKFLOW_REF="https://github.com/${{ github.repository }}/.github/workflows/docker-build-push.yml@refs/tags/${TAG}"
+          OIDC_ISSUER="https://token.actions.githubusercontent.com"
 
           git clone "https://x-access-token:${TUF_REPO_TOKEN}@github.com/${TUF_TARGET_REPO}.git" "${WORKDIR}"
           cd "${WORKDIR}"
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "${SIGNING_BRANCH}" origin/main
 
           TARGET_PATH="targets/oci-prometheus-sd-proxy/releases/${SAFE_TAG}.json"
           mkdir -p "$(dirname "${TARGET_PATH}")"
+
+          python3 -m pip install "tuf>=5.0.0,<7.0.0" --quiet
 
           cat > "${TARGET_PATH}" <<EOF
           {
@@ -158,15 +159,35 @@ jobs:
             "release_metadata_asset_url": "${{ github.server_url }}/${{ github.repository }}/releases/download/${TAG}/release-metadata.json",
             "release_url": "${{ github.event.release.html_url }}",
             "workflow_run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-            "cosign_verify_cmd": "cosign verify ${IMAGE_REF_DIGEST}",
-            "cosign_verify_attestation_cmd": "cosign verify-attestation --type https://github.com/amaanx86/oci-prometheus-sd-proxy/release-metadata ${IMAGE_REF_DIGEST}",
+            "cosign_verify_cmd": "cosign verify --certificate-identity=${WORKFLOW_REF} --certificate-oidc-issuer=${OIDC_ISSUER} ${IMAGE_REF_DIGEST}",
+            "cosign_verify_attestation_cmd": "cosign verify-attestation --certificate-identity=${WORKFLOW_REF} --certificate-oidc-issuer=${OIDC_ISSUER} --type https://github.com/amaanx86/oci-prometheus-sd-proxy/release-metadata ${IMAGE_REF_DIGEST}",
             "created_at": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           }
           EOF
 
-          git add "${TARGET_PATH}"
+          export TUF_TARGET_KEY="oci-prometheus-sd-proxy/releases/${SAFE_TAG}.json"
+          export TUF_TARGET_FILE="${TARGET_PATH}"
+          export TUF_METADATA_FILE="metadata/targets.json"
+          python3 -c "
+          import os
+          from tuf.api.metadata import Metadata, TargetFile
+          key   = os.environ['TUF_TARGET_KEY']
+          fpath = os.environ['TUF_TARGET_FILE']
+          mpath = os.environ['TUF_METADATA_FILE']
+          md = Metadata.from_file(mpath)
+          md.signed.targets[key] = TargetFile.from_file(key, fpath)
+          md.signed.version += 1
+          md.signatures.clear()
+          md.to_file(mpath)
+          tf = md.signed.targets[key]
+          sha256 = tf.hashes.get('sha256', 'N/A')
+          print(f'targets.json v{md.signed.version}: registered {key}')
+          print(f'  sha256: {sha256}')
+          print(f'  length: {tf.length} bytes')
+          "
+
+          git add "${TARGET_PATH}" metadata/targets.json
           if git diff --cached --quiet; then
-            echo "No TUF target changes detected for ${TAG}."
             echo "pushed_branch=" >> "$GITHUB_OUTPUT"
             echo "target_path=${TARGET_PATH}" >> "$GITHUB_OUTPUT"
             exit 0
@@ -178,18 +199,17 @@ jobs:
           echo "pushed_branch=${SIGNING_BRANCH}" >> "$GITHUB_OUTPUT"
           echo "target_path=${TARGET_PATH}" >> "$GITHUB_OUTPUT"
 
-      - name: Summarize TUF publishing
+      - name: Job summary
         if: steps.tuf_publish.outputs.target_path != ''
         run: |
           {
-            echo "### TUF metadata publication"
-            echo "- Target repo: ${TUF_TARGET_REPO}"
-            echo "- Manifest path: ${{ steps.tuf_publish.outputs.target_path }}"
+            echo "### Release artifacts"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Image | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}\` |"
+            echo "| TUF manifest | \`${{ steps.tuf_publish.outputs.target_path }}\` |"
             if [ -n "${{ steps.tuf_publish.outputs.pushed_branch }}" ]; then
-              echo "- Signing branch: ${{ steps.tuf_publish.outputs.pushed_branch }}"
-              echo "- Expected signing event URL: https://github.com/${TUF_TARGET_REPO}/pulls?q=is%3Apr+head%3A${{ steps.tuf_publish.outputs.pushed_branch }}"
-            else
-              echo "- No branch pushed (manifest unchanged)."
+              echo "| Signing PR | https://github.com/${TUF_TARGET_REPO}/pulls |"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
