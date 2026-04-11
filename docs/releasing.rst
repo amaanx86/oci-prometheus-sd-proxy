@@ -3,11 +3,6 @@ Release Process
 
 This document covers how to cut a release, how image signing works, and how a new maintainer can be onboarded as a TUF signer.
 
-.. contents::
-   :local:
-   :depth: 2
-
-
 Overview
 --------
 
