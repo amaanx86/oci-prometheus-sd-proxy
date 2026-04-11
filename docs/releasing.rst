@@ -55,10 +55,12 @@ Paste the relevant ``CHANGELOG.md`` section directly into ``--notes``. Include t
 The workflow will:
 
 - Build a multi-arch image (``linux/amd64``, ``linux/arm64``) and push to GHCR
+- Generate a CycloneDX SBOM via ``anchore/sbom-action`` and attach it as a cosign attestation (``--type cyclonedx``); also uploaded as a release asset
 - Sign the image digest with cosign using GitHub Actions OIDC (keyless)
-- Generate ``release-metadata.json`` and attach it as a cosign attestation
+- Generate ``release-metadata.json`` (digest, commit, tag, build timestamp) and attach it as a cosign attestation under the project-specific predicate type
 - Upload ``release-metadata.json`` as a release asset
 - Push a ``sign/release-1-5-0-<run_id>`` branch to the TUF repository
+- Generate SLSA L3 build provenance via ``slsa-github-generator`` in a separate isolated job with its own OIDC identity
 
 3. Sign the TUF targets metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,27 +97,86 @@ Once the ``TUF-on-CI signing event`` check passes, merge the PR. The ``online-si
       --repo amaanx86/oci-prometheus-sd-proxy-tuf-on-ci
 
 
-Image signing and verification
--------------------------------
+Verifying a release
+--------------------
 
-All release images are signed keylessly using `cosign <https://docs.sigstore.dev/cosign/overview/>`_ with GitHub Actions OIDC. No private key material is stored anywhere.
+Every release produces four independently verifiable artifacts: an image signature, a CycloneDX SBOM attestation, a release-metadata attestation, and SLSA L3 build provenance. A TUF metadata chain separately records the authorised release digest and can be inspected directly at https://github.com/amaanx86/oci-prometheus-sd-proxy-tuf-on-ci. All verification uses the image digest rather than the tag; the tag is a mutable pointer but the digest is what signatures actually cover.
 
-Verify a signed image::
+Tools required: ``cosign`` (`install <https://docs.sigstore.dev/cosign/system_config/installation/>`_), ``slsa-verifier`` (`install <https://github.com/slsa-framework/slsa-verifier#installation>`_), and ``python3``.
 
-    cosign verify ghcr.io/amaanx86/oci-prometheus-sd-proxy:<version> \
+Step 0: resolve the digest
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All commands below require the image digest. Resolve it once and reuse it::
+
+    DIGEST=$(cosign verify \
+      --certificate-identity \
+        "https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v<version>" \
       --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-      --certificate-identity-regexp \
-        '^https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+      ghcr.io/amaanx86/oci-prometheus-sd-proxy:<version> 2>/dev/null \
+      | python3 -c "
+    import json, sys
+    records = json.load(sys.stdin)
+    print(list({r['critical']['image']['docker-manifest-digest'] for r in records})[0])
+    ")
 
-Verify the release metadata attestation::
+    IMAGE="ghcr.io/amaanx86/oci-prometheus-sd-proxy@${DIGEST}"
 
-    cosign verify-attestation \
-      --type https://github.com/amaanx86/oci-prometheus-sd-proxy/release-metadata \
+Step 1: image signature
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Verifies that the image digest was signed by the ``docker-build-push.yml`` workflow for this exact tag, with the event recorded in the Rekor transparency log::
+
+    cosign verify "${IMAGE}" \
+      --certificate-identity \
+        "https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v<version>" \
+      --certificate-oidc-issuer https://token.actions.githubusercontent.com
+
+Step 2: SBOM attestation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Verifies the CycloneDX SBOM attestation. The SBOM payload is printed to stdout on success (pipe to ``| python3 -m json.tool`` to read it)::
+
+    cosign verify-attestation "${IMAGE}" \
+      --certificate-identity \
+        "https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v<version>" \
       --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-      --certificate-identity-regexp \
-        '^https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$' \
-      ghcr.io/amaanx86/oci-prometheus-sd-proxy:<version>
+      --type cyclonedx \
+      > /dev/null
 
+Step 3: release-metadata attestation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Verifies the in-toto attestation containing the image digest, source commit, release tag, and build timestamp::
+
+    cosign verify-attestation "${IMAGE}" \
+      --certificate-identity \
+        "https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v<version>" \
+      --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+      --type "https://github.com/amaanx86/oci-prometheus-sd-proxy/release-metadata" \
+      | python3 -c "
+    import json, sys, base64
+    e = json.load(sys.stdin)
+    p = e['payload']; p += '=' * (-len(p) % 4)
+    stmt = json.loads(base64.b64decode(p))
+    print(json.dumps(stmt['predicate'], indent=2))
+    "
+
+Step 4: SLSA L3 provenance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Verifies that the image was built by the ``slsa-github-generator`` trusted builder in an isolated job from the exact source commit. ``slsa-verifier`` requires a digest reference - it rejects mutable tags by design::
+
+    slsa-verifier verify-image "${IMAGE}" \
+      --source-uri "github.com/amaanx86/oci-prometheus-sd-proxy" \
+      --source-tag "v<version>"
+
+A passing result prints the verified builder identity and the source commit::
+
+    Verified build using builder "https://github.com/slsa-framework/slsa-github-generator/
+      .github/workflows/generator_container_slsa3.yml@refs/tags/v2.0.0"
+    at commit <sha>
+    PASSED: SLSA verification passed
 
 TUF signing keys
 -----------------

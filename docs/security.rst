@@ -17,37 +17,67 @@ Generate a strong token:
 
     openssl rand -hex 32
 
-Image Signing and Release Metadata
-----------------------------------
+Supply Chain Security
+---------------------
 
-Release images published to GHCR are signed with cosign using GitHub Actions OIDC.
-The release workflow also publishes a `release-metadata.json` asset and attaches
-the same metadata as a cosign attestation so you can verify the release inputs
-and build provenance separately from the image signature.
+Every release image is signed and attested through a fully keyless pipeline - no
+long-lived private keys exist anywhere. The pipeline produces four independently
+verifiable artifacts. Full verification commands are documented in
+:doc:`releasing`.
 
-Verify a signed image with:
+**What is signed**
+
+- Image signature via cosign (GitHub Actions OIDC, recorded in Rekor)
+- CycloneDX SBOM attached as a cosign attestation (``--type cyclonedx``)
+- Release-metadata attestation (digest, source commit, build timestamp)
+- SLSA L3 build provenance via ``slsa-github-generator`` in an isolated job
+- TUF metadata chain published to GitHub Pages via ``tuf-on-ci``
+
+**Verifying an image before deployment**
+
+All verification uses the image digest, not the tag. Resolve it first:
 
 .. code-block:: bash
 
-    cosign verify ghcr.io/amaanx86/oci-prometheus-sd-proxy:latest \
+    DIGEST=$(cosign verify \
+      --certificate-identity \
+        "https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v<version>" \
       --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-      --certificate-identity-regexp '^https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+      ghcr.io/amaanx86/oci-prometheus-sd-proxy:<version> 2>/dev/null \
+      | python3 -c "
+    import json, sys
+    records = json.load(sys.stdin)
+    print(list({r['critical']['image']['docker-manifest-digest'] for r in records})[0])
+    ")
 
-Verify the release metadata attestation with:
+    IMAGE="ghcr.io/amaanx86/oci-prometheus-sd-proxy@${DIGEST}"
+
+Image signature:
 
 .. code-block:: bash
 
-        cosign verify-attestation ghcr.io/amaanx86/oci-prometheus-sd-proxy:latest \
-            --type https://github.com/amaanx86/oci-prometheus-sd-proxy/release-metadata \
-            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-            --certificate-identity-regexp '^https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+    cosign verify "${IMAGE}" \
+      --certificate-identity \
+        "https://github.com/amaanx86/oci-prometheus-sd-proxy/.github/workflows/docker-build-push.yml@refs/tags/v<version>" \
+      --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
-A separate TUF-on-CI metadata repository is used for release metadata publication:
+SLSA L3 provenance (requires ``slsa-verifier``):
 
-- `https://github.com/amaanx86/oci-prometheus-sd-proxy-tuf-on-ci`
+.. code-block:: bash
 
-This keeps TUF metadata lifecycle management isolated from application source code
-while preserving cosign-based image and attestation verification in this repository.
+    slsa-verifier verify-image "${IMAGE}" \
+      --source-uri "github.com/amaanx86/oci-prometheus-sd-proxy" \
+      --source-tag "v<version>"
+
+See :doc:`releasing` for SBOM attestation and release-metadata attestation verification.
+
+**TUF metadata repository**
+
+Release manifests are published independently at
+https://github.com/amaanx86/oci-prometheus-sd-proxy-tuf-on-ci.
+This keeps TUF lifecycle management (key rotation, metadata expiry) isolated
+from the application repository. The signed metadata is served via GitHub Pages at
+https://amaanx86.github.io/oci-prometheus-sd-proxy-tuf-on-ci/metadata/.
 
 Best Practices
 --------------
