@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-04-12
+
+### Fixed
+
+- TUF release manifests were not being registered as TUF targets - `metadata/targets.json` was never updated by the release workflow, so `targets.json` always had an empty target list and a TUF client could not verify any release manifest through the TUF chain
+- Signing event PRs became mergeable immediately without offline maintainer signing because no metadata change was present on the signing branch, so the existing signature on `targets.json` satisfied the threshold check without any new signing required
+- `cosign verify` and `cosign verify-attestation` commands in release verification manifests were missing `--certificate-identity` and `--certificate-oidc-issuer` flags, meaning verification would pass for any Sigstore signer rather than being pinned to the release workflow identity
+- Redeclared `ARG VERSION` in the final Dockerfile stage to resolve undefined variable warning on `LABEL org.opencontainers.image.version`
+
+### CI
+
+- Release workflow now uses `python-tuf` to add the release manifest SHA-256 hash and length to `metadata/targets.json` and clear its signatures before pushing to the signing branch, ensuring the signing-event action requires a fresh offline signature from the maintainer before the PR can be merged
+- Bumped `actions/checkout` from `v4` to `v6.0.2` across all workflows
+- Bumped `docker/setup-buildx-action` from `v3` to `v4.0.0`
+- Bumped `docker/login-action` from `v4` to `v4.1.0`
+- Bumped `docker/metadata-action` from `v6` to `v6.0.0`
+- Bumped `docker/build-push-action` from `v7` to `v7.1.0`
+- Bumped `actions/setup-go` from `v6` to `v6.4.0`
+- Pinned `aquasecurity/trivy-action` from `@master` to `v0.35.0`
+
 ## [1.4.1] - 2026-04-11
 
 ### Security
@@ -207,7 +227,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.2.0...v1.3.0
