@@ -16,7 +16,9 @@ discovery:
   rate_limit_rps: 10.0            # max OCI API requests per second per tenancy
 
 tenancies:
+  # --- Option A: API key auth (static credentials, works anywhere) ---
   - name: my-tenancy
+    auth_type: api_key            # default; can be omitted
     region: me-jeddah-1         # OCI region code
     tenancy_id: ocid1.tenancy.oc1..xxxxxx
     user_id: ocid1.user.oc1..xxxxxx
@@ -29,12 +31,11 @@ tenancies:
     # Or explicitly list compartment OCIDs to scan only those
     compartments: []
 
-  # Optional: add more tenancies
-  # - name: another-tenancy
+  # --- Option B: Instance principal auth (proxy runs on OCI compute) ---
+  # No user/key credentials needed - the instance identity is used automatically.
+  # Requires a dynamic group + IAM policy granting the instance read access.
+  # - name: my-tenancy-instance-principal
+  #   auth_type: instance_principal
   #   region: us-ashburn-1
   #   tenancy_id: ocid1.tenancy.oc1..yyyyyy
-  #   user_id: ocid1.user.oc1..yyyyyy
-  #   fingerprint: "11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00"
-  #   private_key_path: /etc/oci-sd/keys/api_key_2.pem
-  #   passphrase: ""
   #   compartments: []
