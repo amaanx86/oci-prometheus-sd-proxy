@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"github.com/oracle/oci-go-sdk/v65/core"
 	"github.com/oracle/oci-go-sdk/v65/identity"
 	"golang.org/x/time/rate"
@@ -37,13 +38,17 @@ type tenancyDiscoverer struct {
 	retry   common.RetryPolicy
 }
 
-// discoverTenancy returns all matching target groups from a single OCI tenancy.
-// Errors from individual compartments are logged and skipped rather than failing
-// the entire tenancy, so a partial result is always returned.
-func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.TenancyConfig) ([]TargetGroup, tenancyStats, error) {
+// buildConfigProvider returns the appropriate OCI configuration provider based on
+// the tenancy's auth_type. "instance_principal" uses IMDS-based credentials;
+// "api_key" (the default) uses the static user/key credentials from config.
+func buildConfigProvider(tenancy config.TenancyConfig) (common.ConfigurationProvider, error) {
+	if tenancy.AuthType == "instance_principal" {
+		return auth.InstancePrincipalConfigurationProvider()
+	}
+
 	keyContent, err := os.ReadFile(tenancy.PrivateKeyPath)
 	if err != nil {
-		return nil, tenancyStats{}, fmt.Errorf("read private key for tenancy %q: %w", tenancy.Name, err)
+		return nil, fmt.Errorf("read private key: %w", err)
 	}
 
 	var passphrase *string
@@ -51,14 +56,24 @@ func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.Ten
 		passphrase = &tenancy.Passphrase
 	}
 
-	provider := common.NewRawConfigurationProvider(
+	return common.NewRawConfigurationProvider(
 		tenancy.TenancyID,
 		tenancy.UserID,
 		tenancy.Region,
 		tenancy.Fingerprint,
 		string(keyContent),
 		passphrase,
-	)
+	), nil
+}
+
+// discoverTenancy returns all matching target groups from a single OCI tenancy.
+// Errors from individual compartments are logged and skipped rather than failing
+// the entire tenancy, so a partial result is always returned.
+func discoverTenancy(ctx context.Context, cfg *config.Config, tenancy config.TenancyConfig) ([]TargetGroup, tenancyStats, error) {
+	provider, err := buildConfigProvider(tenancy)
+	if err != nil {
+		return nil, tenancyStats{}, fmt.Errorf("build config provider for tenancy %q: %w", tenancy.Name, err)
+	}
 
 	computeClient, err := core.NewComputeClientWithConfigurationProvider(provider)
 	if err != nil {

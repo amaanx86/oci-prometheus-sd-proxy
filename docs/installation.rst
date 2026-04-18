@@ -57,10 +57,12 @@ Before running the service:
    - Key: ``monitoring``
    - Value: ``enabled``
 
-2. **Create API credentials** for each OCI tenancy:
+2. **Grant OCI permissions** - choose one of two authentication methods:
 
-   - Generate an API key pair in OCI Console under **Identity > Users > API Keys**
-   - Add the user to an OCI group and attach the following IAM policies to that group in each tenancy:
+   .. rubric:: Option A: API key auth (works anywhere)
+
+   Generate an API key pair in OCI Console under **Identity > Users > API Keys**.
+   Add the user to an OCI group and attach the following IAM policies to that group in each tenancy:
 
    .. code-block:: text
 
@@ -70,7 +72,47 @@ Before running the service:
        Allow group <group-name> to read vnics in tenancy
        Allow group <group-name> to read tag-namespaces in tenancy
 
-   Replace ``<group-name>`` with the OCI group containing your API key user. These five policies cover all API calls the proxy makes:
+   Replace ``<group-name>`` with the OCI group containing your API key user.
+
+   .. rubric:: Option B: Instance principal auth (proxy runs on OCI compute)
+
+   No API key is needed. The compute instance authenticates using its own identity via OCI IMDS.
+
+   **Step 1** - Create a dynamic group that matches the instance running the proxy.
+   In OCI Console go to **Identity > Dynamic Groups > Create Dynamic Group**:
+
+   .. code-block:: text
+
+       All {instance.id = '<your-instance-ocid>'}
+
+   Or to match any instance in a compartment:
+
+   .. code-block:: text
+
+       All {instance.compartment.id = '<compartment-ocid>'}
+
+   **Step 2** - Create IAM policies granting the dynamic group read access.
+   In OCI Console go to **Identity > Policies > Create Policy** at the tenancy (root) level:
+
+   .. code-block:: text
+
+       Allow dynamic-group <dynamic-group-name> to read instances in tenancy
+       Allow dynamic-group <dynamic-group-name> to read compartments in tenancy
+       Allow dynamic-group <dynamic-group-name> to read vnic-attachments in tenancy
+       Allow dynamic-group <dynamic-group-name> to read vnics in tenancy
+       Allow dynamic-group <dynamic-group-name> to read tag-namespaces in tenancy
+
+   Replace ``<dynamic-group-name>`` with the dynamic group created in Step 1.
+
+   .. note::
+
+      Policies for instance principals must be created at the **tenancy (root) level**, not at the compartment level, for ``ListCompartments`` to traverse the full compartment tree.
+
+   **Step 3** - Set ``auth_type: instance_principal`` in ``config.yaml`` (see :doc:`configuration`).
+
+   ---
+
+   These five permissions cover all API calls the proxy makes regardless of auth method:
 
    .. list-table::
       :header-rows: 1

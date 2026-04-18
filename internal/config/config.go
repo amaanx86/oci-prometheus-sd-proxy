@@ -39,6 +39,7 @@ type TenancyConfig struct {
 	Name           string   `yaml:"name"`
 	Region         string   `yaml:"region"`
 	TenancyID      string   `yaml:"tenancy_id"`
+	AuthType       string   `yaml:"auth_type"` // "api_key" (default) or "instance_principal"
 	UserID         string   `yaml:"user_id"`
 	Fingerprint    string   `yaml:"fingerprint"`
 	PrivateKeyPath string   `yaml:"private_key_path"`
@@ -144,17 +145,24 @@ func (c *Config) validate() error {
 		if t.TenancyID == "" {
 			return fmt.Errorf("tenancy[%d] (%s): tenancy_id is required", i, t.Name)
 		}
-		if t.UserID == "" {
-			return fmt.Errorf("tenancy[%d] (%s): user_id is required", i, t.Name)
-		}
 		if t.Region == "" {
 			return fmt.Errorf("tenancy[%d] (%s): region is required", i, t.Name)
 		}
-		if t.Fingerprint == "" {
-			return fmt.Errorf("tenancy[%d] (%s): fingerprint is required", i, t.Name)
-		}
-		if t.PrivateKeyPath == "" {
-			return fmt.Errorf("tenancy[%d] (%s): private_key_path is required", i, t.Name)
+		switch t.AuthType {
+		case "", "api_key":
+			if t.UserID == "" {
+				return fmt.Errorf("tenancy[%d] (%s): user_id is required for api_key auth", i, t.Name)
+			}
+			if t.Fingerprint == "" {
+				return fmt.Errorf("tenancy[%d] (%s): fingerprint is required for api_key auth", i, t.Name)
+			}
+			if t.PrivateKeyPath == "" {
+				return fmt.Errorf("tenancy[%d] (%s): private_key_path is required for api_key auth", i, t.Name)
+			}
+		case "instance_principal":
+			// no credential fields required - identity comes from IMDS
+		default:
+			return fmt.Errorf("tenancy[%d] (%s): unknown auth_type %q - must be api_key or instance_principal", i, t.Name, t.AuthType)
 		}
 		// Note: empty compartments array is OK - will auto-discover all compartments in tenancy
 	}

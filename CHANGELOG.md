@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-04-18
+
+### Added
+
+- Instance principal authentication support for OCI tenancies. Set `auth_type: instance_principal` on a tenancy to authenticate via OCI IMDS instead of static user/key credentials. No `user_id`, `fingerprint`, or `private_key_path` fields required. Useful when the proxy runs directly on an OCI compute instance with a dynamic group + IAM policy granting read access.
+- `auth_type` field on tenancy config accepting `api_key` (default, existing behaviour unchanged) or `instance_principal`. Unknown values are rejected at startup with a clear error.
+
+### Tests
+
+- Added `TestValidate_InstancePrincipalAuth`: asserts instance principal tenancies pass validation without credential fields.
+- Added `TestValidate_InstancePrincipalStillRequiresRegionAndTenancyID`: asserts `name`, `tenancy_id`, and `region` remain required for instance principal tenancies.
+- Added `TestValidate_UnknownAuthType`: asserts an unrecognised `auth_type` value is rejected at startup.
+
+### Documentation
+
+- `docs/installation.rst`: added Option B section with step-by-step dynamic group creation, instance principal IAM policy statements, and a note that policies must be at tenancy root level for compartment auto-discovery.
+- `docs/configuration.rst`: documented `auth_type` field and clarified which credential fields are conditional on auth method.
+- `README.md`: updated OCI IAM Policy section to show both API key and instance principal policy blocks.
+
 ## [1.4.2] - 2026-04-12
 
 ### Fixed
@@ -227,7 +246,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.2...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.3.0...v1.4.0

@@ -326,6 +326,57 @@ func TestValidate_TenancyRequiredFields(t *testing.T) {
 	}
 }
 
+func TestValidate_InstancePrincipalAuth(t *testing.T) {
+	// instance_principal does not require user_id, fingerprint, or private_key_path
+	cfg := defaults()
+	cfg.Server.Token = "tok"
+	cfg.Tenancies = []TenancyConfig{{
+		Name: "t", Region: "r", TenancyID: "tid",
+		AuthType: "instance_principal",
+	}}
+	if err := cfg.validate(); err != nil {
+		t.Errorf("unexpected error for instance_principal tenancy: %v", err)
+	}
+}
+
+func TestValidate_InstancePrincipalStillRequiresRegionAndTenancyID(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(*TenancyConfig)
+	}{
+		{"missing name", func(c *TenancyConfig) { c.Name = "" }},
+		{"missing tenancy_id", func(c *TenancyConfig) { c.TenancyID = "" }},
+		{"missing region", func(c *TenancyConfig) { c.Region = "" }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tenancy := TenancyConfig{
+				Name: "t", Region: "r", TenancyID: "tid",
+				AuthType: "instance_principal",
+			}
+			tc.mutate(&tenancy)
+			cfg := defaults()
+			cfg.Server.Token = "tok"
+			cfg.Tenancies = []TenancyConfig{tenancy}
+			if err := cfg.validate(); err == nil {
+				t.Errorf("expected validation error for %s", tc.name)
+			}
+		})
+	}
+}
+
+func TestValidate_UnknownAuthType(t *testing.T) {
+	cfg := defaults()
+	cfg.Server.Token = "tok"
+	cfg.Tenancies = []TenancyConfig{{
+		Name: "t", Region: "r", TenancyID: "tid",
+		AuthType: "magic_beans",
+	}}
+	if err := cfg.validate(); err == nil {
+		t.Error("expected validation error for unknown auth_type")
+	}
+}
+
 func TestValidate_ValidConfig(t *testing.T) {
 	c := defaults()
 	c.Server.Token = "tok"

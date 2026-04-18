@@ -71,7 +71,9 @@ scrape_configs:
 
 ## OCI IAM Policy
 
-The OCI user or group used by this service requires the following IAM policies in each tenancy:
+Two authentication methods are supported via `auth_type` in `config.yaml`.
+
+**API key auth** (default - works anywhere):
 
 ```
 Allow group <group-name> to read instances in tenancy
@@ -81,7 +83,17 @@ Allow group <group-name> to read vnics in tenancy
 Allow group <group-name> to read tag-namespaces in tenancy
 ```
 
-Replace `<group-name>` with the OCI group that contains the API key user. These policies cover compartment auto-discovery, instance listing, VNIC resolution, and tag-based filtering. Missing any of these will result in `NotAuthorizedOrNotFound` errors in the logs.
+**Instance principal auth** (proxy runs on OCI compute - no credentials needed):
+
+```
+Allow dynamic-group <dynamic-group-name> to read instances in tenancy
+Allow dynamic-group <dynamic-group-name> to read compartments in tenancy
+Allow dynamic-group <dynamic-group-name> to read vnic-attachments in tenancy
+Allow dynamic-group <dynamic-group-name> to read vnics in tenancy
+Allow dynamic-group <dynamic-group-name> to read tag-namespaces in tenancy
+```
+
+These five permissions cover all API calls the proxy makes. Missing any will result in `NotAuthorizedOrNotFound` errors in the logs. See the [full installation docs](https://oci-prometheus-sd-proxy.readthedocs.io/) for dynamic group setup and policy scoping requirements.
 
 ## Full Documentation
 
