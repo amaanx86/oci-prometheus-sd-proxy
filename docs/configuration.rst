@@ -121,17 +121,23 @@ Fields
 **tenancies[].tenancy_id**
     Tenancy OCID
 
+**tenancies[].auth_type**
+    Authentication method. One of:
+
+    - ``api_key`` (default) - static user credentials; requires ``user_id``, ``fingerprint``, and ``private_key_path``
+    - ``instance_principal`` - authenticates via OCI IMDS; no credential fields needed. Only valid when the proxy runs on an OCI compute instance with a dynamic group and IAM policy granting read access. See :doc:`installation` for setup steps.
+
 **tenancies[].user_id**
-    User OCID for API authentication
+    User OCID for API authentication. Required when ``auth_type`` is ``api_key``.
 
 **tenancies[].fingerprint**
-    API key fingerprint
+    API key fingerprint. Required when ``auth_type`` is ``api_key``.
 
 **tenancies[].private_key_path**
-    Path to unencrypted PEM private key
+    Path to unencrypted PEM private key. Required when ``auth_type`` is ``api_key``.
 
 **tenancies[].passphrase**
-    Passphrase for encrypted keys (leave empty for unencrypted)
+    Passphrase for encrypted keys (leave empty for unencrypted). Only used with ``api_key`` auth.
 
 **tenancies[].compartments**
     List of compartment OCIDs to scan. Leave empty ``[]`` to auto-discover all compartments.
