@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-04-21
+
+### Changed
+
+- Bumped `github.com/oracle/oci-go-sdk/v65` from `65.111.0` to `65.112.0`
+
 ## [1.5.0] - 2026-04-18
 
 ### Added
@@ -246,7 +252,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.0...v1.4.1
