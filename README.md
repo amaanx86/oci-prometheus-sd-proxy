@@ -132,8 +132,8 @@ When installing `windows_exporter` via the MSI installer, configure it to listen
 ## Features
 
 - **Multi-tenancy**: Discover instances across any number of OCI tenancies
-- **Tag-based filtering**: Only scrape instances with configured tags
-- **Rich labels**: Tenancy, compartment, shape, region, and all custom tags
+- **Optional tag-based filtering**: Filter by freeform/defined tag, or omit to discover all running instances
+- **Rich labels**: Tenancy, compartment, shape, region, all freeform tags, and all defined tags
 - **Fast discovery**: Parallel compartment scanning with caching
 - **Rate limiting**: Proactive token bucket + reactive retry policy prevent 429 errors
 - **Secure**: Bearer token auth, distroless image, read-only config mounts

@@ -22,11 +22,11 @@ All configuration can be set via environment variables:
      - config.yaml
      - Path to configuration file
    * - ``DISCOVERY_TAG_KEY``
-     - monitoring
-     - OCI tag key to filter instances
+     - (empty)
+     - OCI tag key to filter instances. When both ``tag_key`` and ``tag_value`` are empty, all running instances are returned without tag filtering.
    * - ``DISCOVERY_TAG_VALUE``
-     - enabled
-     - OCI tag value to filter instances
+     - (empty)
+     - OCI tag value to filter instances. When both ``tag_key`` and ``tag_value`` are empty, all running instances are returned without tag filtering.
    * - ``DISCOVERY_LINUX_PORT``
      - 9100
      - Port for Linux node_exporter
@@ -52,8 +52,9 @@ Main configuration file with OCI tenancy credentials:
       token: "use-SERVER_TOKEN-env-var"
 
     discovery:
-      tag_key: monitoring
-      tag_value: enabled
+      # tag_key: monitoring
+      # tag_value: enabled
+      # Omit both tag_key and tag_value to discover all running instances
       linux_port: 9100
       windows_port: 9182
       refresh_interval: 5m
@@ -79,7 +80,10 @@ Fields
     Bearer token (prefer ``SERVER_TOKEN`` environment variable)
 
 **discovery.tag_key / tag_value**
-    OCI freeform tag for filtering instances (e.g., ``monitoring=enabled``)
+    OCI freeform or defined tag for filtering instances (e.g., ``monitoring=enabled``).
+    Both fields are optional. When both are omitted (or empty), the proxy returns all
+    running instances without tag filtering - useful for discovering everything in a
+    region and relying on Prometheus relabel rules instead.
 
 **discovery.linux_port**
     Port for Linux Prometheus exporters (default: node_exporter on 9100)
