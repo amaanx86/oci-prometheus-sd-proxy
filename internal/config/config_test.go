@@ -71,11 +71,11 @@ func TestDefaults(t *testing.T) {
 	if d.Server.Port != 8080 {
 		t.Errorf("default port: got %d, want 8080", d.Server.Port)
 	}
-	if d.Discovery.TagKey != "monitoring" {
-		t.Errorf("default tag_key: got %q, want %q", d.Discovery.TagKey, "monitoring")
+	if d.Discovery.TagKey != "" {
+		t.Errorf("default tag_key: got %q, want empty", d.Discovery.TagKey)
 	}
-	if d.Discovery.TagValue != "enabled" {
-		t.Errorf("default tag_value: got %q, want %q", d.Discovery.TagValue, "enabled")
+	if d.Discovery.TagValue != "" {
+		t.Errorf("default tag_value: got %q, want empty", d.Discovery.TagValue)
 	}
 	if d.Discovery.LinuxPort != 9100 {
 		t.Errorf("default linux_port: got %d, want 9100", d.Discovery.LinuxPort)

@@ -462,6 +462,87 @@ func TestBuildLabels_EmptyFreeformTags(t *testing.T) {
 	}
 }
 
+// ---- buildLabels: defined tags exposed ---------------------------------------
+
+func TestBuildLabels_DefinedTagsExposed(t *testing.T) {
+	tenancy := config.TenancyConfig{Name: "t", TenancyID: "tid", Region: "r"}
+	inst := makeInstance(func(i *core.Instance) {
+		i.DefinedTags = map[string]map[string]interface{}{
+			"Operations": {
+				"CostCenter":  "42",
+				"Environment": "production",
+			},
+			"Oracle-Tags": {
+				"CreatedBy": "user@example.com",
+			},
+		}
+	})
+	labels := buildLabels(tenancy, "comp", inst, "10.0.0.1")
+
+	expected := map[string]string{
+		"__meta_oci_defined_tag_operations_costcenter":  "42",
+		"__meta_oci_defined_tag_operations_environment": "production",
+		"__meta_oci_defined_tag_oracle_tags_createdby":  "user@example.com",
+	}
+	for key, want := range expected {
+		if got := labels[key]; got != want {
+			t.Errorf("label %q: got %q, want %q", key, got, want)
+		}
+	}
+}
+
+func TestBuildLabels_DefinedTagsNonStringSkipped(t *testing.T) {
+	tenancy := config.TenancyConfig{Name: "t", TenancyID: "tid", Region: "r"}
+	inst := makeInstance(func(i *core.Instance) {
+		i.DefinedTags = map[string]map[string]interface{}{
+			"ns": {
+				"string_val": "hello",
+				"int_val":    42,
+				"bool_val":   true,
+			},
+		}
+	})
+	labels := buildLabels(tenancy, "comp", inst, "10.0.0.1")
+
+	// Only string values should appear
+	if labels["__meta_oci_defined_tag_ns_string_val"] != "hello" {
+		t.Error("expected string defined tag to be present")
+	}
+	if _, ok := labels["__meta_oci_defined_tag_ns_int_val"]; ok {
+		t.Error("non-string defined tag should not be present")
+	}
+	if _, ok := labels["__meta_oci_defined_tag_ns_bool_val"]; ok {
+		t.Error("non-string defined tag should not be present")
+	}
+}
+
+func TestBuildLabels_DefinedTagsEmpty(t *testing.T) {
+	tenancy := config.TenancyConfig{Name: "t", TenancyID: "tid", Region: "r"}
+	inst := makeInstance(func(i *core.Instance) {
+		i.DefinedTags = map[string]map[string]interface{}{}
+	})
+	labels := buildLabels(tenancy, "comp", inst, "10.0.0.1")
+
+	for k := range labels {
+		if len(k) > len("__meta_oci_defined_tag_") && k[:len("__meta_oci_defined_tag_")] == "__meta_oci_defined_tag_" {
+			t.Errorf("unexpected defined tag label %q for empty defined tags", k)
+			break
+		}
+	}
+}
+
+func TestBuildLabels_DefinedTagsNil(t *testing.T) {
+	tenancy := config.TenancyConfig{Name: "t", TenancyID: "tid", Region: "r"}
+	inst := makeInstance(func(i *core.Instance) {
+		i.DefinedTags = nil
+	})
+	// Should not panic
+	labels := buildLabels(tenancy, "comp", inst, "10.0.0.1")
+	if labels["__meta_oci_private_ip"] != "10.0.0.1" {
+		t.Error("core labels should still be present with nil defined tags")
+	}
+}
+
 // ---- isWindows: no freeform tags map ----------------------------------------
 
 func TestIsWindows_NilFreeformTags(t *testing.T) {
