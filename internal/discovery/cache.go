@@ -35,9 +35,14 @@ func NewCache(cfg *config.Config) *Cache {
 // Start performs an initial synchronous refresh (so the server starts with data)
 // then launches a background goroutine that refreshes on the configured interval.
 func (c *Cache) Start(ctx context.Context) {
+	tagFilter := "disabled"
+	if c.cfg.Discovery.TagKey != "" && c.cfg.Discovery.TagValue != "" {
+		tagFilter = c.cfg.Discovery.TagKey + "=" + c.cfg.Discovery.TagValue
+	}
 	slog.Info("performing initial OCI discovery",
 		"interval", c.cfg.Discovery.RefreshInterval,
 		"tenancies", len(c.cfg.Tenancies),
+		"tag_filter", tagFilter,
 	)
 	c.refresh(ctx)
 
