@@ -5,7 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.2] - 2026-04-29
+
+### Added
+
+- Optional tag-free discovery: `tag_key` and `tag_value` are now optional. When omitted, the proxy returns all running instances in configured compartments without tag filtering ([#43](https://github.com/amaanx86/oci-prometheus-sd-proxy/issues/43))
+- Expose OCI defined tags as `__meta_oci_defined_tag_<namespace>_<key>` Prometheus labels for relabeling ([#43](https://github.com/amaanx86/oci-prometheus-sd-proxy/issues/43))
+
+### Changed
+
+- Default `tag_key` and `tag_value` are now empty (previously `monitoring` / `enabled`). Existing configs that rely on the old defaults must explicitly set `tag_key: monitoring` and `tag_value: enabled` to preserve the same behavior ([#43](https://github.com/amaanx86/oci-prometheus-sd-proxy/issues/43))
+- Bumped `github.com/oracle/oci-go-sdk/v65` from `65.112.0` to `65.113.0` ([#45](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/45))
+
+### Documentation
+
+- `docs/configuration.rst`: updated `tag_key` / `tag_value` defaults and field descriptions to reflect optional tag filtering ([#43](https://github.com/amaanx86/oci-prometheus-sd-proxy/issues/43))
+- `README.md`: updated feature list to mention optional tag filtering and defined tag labels ([#43](https://github.com/amaanx86/oci-prometheus-sd-proxy/issues/43))
+- `deploy/docker/`: updated `config.yaml.example`, `.env.example`, and `README.md` to reflect optional tag filtering defaults ([#43](https://github.com/amaanx86/oci-prometheus-sd-proxy/issues/43))
+
+### Fixed
+
+- `docker-compose-local.yml` and `deploy/docker/docker-compose-production.yml`: tag key/value env vars used `:-monitoring`/`:-enabled` fallback defaults, which overrode config.yaml even when the vars were unset in `.env`. Changed to `${VAR-}` so the app config takes effect when env vars are not set ([#43](https://github.com/amaanx86/oci-prometheus-sd-proxy/issues/43))
+
+### Build
+
+- Reworked Makefile: `make build` now compiles for current OS/arch, added `build-linux` for cross-compilation, `lint` runs `go vet` first, added `fmt` target, auto-generated help from target comments
+
+### CI
+
+- Bumped `aquasecurity/trivy-action` from `0.35.0` to `0.36.0` ([#44](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/44))
 
 ## [1.5.1] - 2026-04-21
 
@@ -253,6 +281,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CodeQL security scanning
 
 [Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.1...HEAD
+[1.5.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.1...v1.4.2
