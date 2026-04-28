@@ -55,8 +55,8 @@ All settings are in `.env`:
 |----------|---------|-------------|
 | `SERVER_PORT` | 8080 | HTTP port |
 | `SERVER_TOKEN` | - | **Required**: Bearer token for API auth |
-| `DISCOVERY_TAG_KEY` | monitoring | OCI tag key to filter instances |
-| `DISCOVERY_TAG_VALUE` | enabled | OCI tag value to filter instances |
+| `DISCOVERY_TAG_KEY` | (empty) | OCI tag key to filter instances. Omit to discover all. |
+| `DISCOVERY_TAG_VALUE` | (empty) | OCI tag value to filter instances. Omit to discover all. |
 | `DISCOVERY_LINUX_PORT` | 9100 | node_exporter port |
 | `DISCOVERY_WINDOWS_PORT` | 9182 | windows_exporter port |
 | `DISCOVERY_REFRESH_INTERVAL` | 5m | Poll interval |
@@ -113,6 +113,6 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/v1/targets | jq .
 
 **Config not found**: Verify `config.yaml` exists in current directory.
 
-**No targets returned**: Check that instances have the correct OCI tag (`monitoring=enabled`).
+**No targets returned**: If tag filtering is configured, check that instances have the matching OCI tag. If tag filtering is disabled (default), verify the proxy has IAM permissions to list instances in the target compartments.
 
 **Auth failed**: Verify `SERVER_TOKEN` in `.env` matches what's in `Authorization` header.

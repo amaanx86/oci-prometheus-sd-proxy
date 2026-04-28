@@ -1,71 +1,54 @@
-.PHONY: help build test lint docker tidy run clean
+BINARY     := oci-sd-proxy
+IMAGE      := oci-prometheus-sd-proxy
+VERSION    := $(shell git describe --tags --abbrev=0 2>/dev/null || echo dev)
+LDFLAGS    := -s -w -X main.version=$(VERSION)
 
-help:
-	@echo "oci-prometheus-sd-proxy - Available targets:"
-	@echo ""
-	@echo "  make build           Build binary (outputs to ./bin/oci-sd-proxy)"
-	@echo "  make test            Run tests with race detector"
-	@echo "  make lint            Lint code with golangci-lint"
-	@echo "  make docker          Build Docker image"
-	@echo "  make tidy            Download and tidy dependencies"
-	@echo "  make run             Run locally (requires SERVER_TOKEN env var)"
-	@echo "  make clean           Remove build artifacts"
-	@echo ""
+.DEFAULT_GOAL := help
+.PHONY: help build build-linux test vet lint fmt docker tidy run clean
 
-# Build binary
-build:
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-15s %s\n", $$1, $$2}'
+
+build: ## Build binary for current OS/arch
 	@mkdir -p bin
-	@echo "Building binary..."
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-		-ldflags "-s -w -X main.version=$$(git describe --tags --abbrev=0 2>/dev/null || echo 'dev')" \
-		-o bin/oci-sd-proxy \
-		./cmd/server
-	@echo "Binary ready: bin/oci-sd-proxy"
+	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o bin/$(BINARY) ./cmd/server
 
-# Run tests
-test:
-	@echo "Running tests..."
-	@go test -race -cover ./...
+build-linux: ## Cross-compile for linux/amd64
+	@mkdir -p bin
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o bin/$(BINARY) ./cmd/server
 
-# Lint code
-lint:
-	@echo "Linting code..."
-	@if command -v golangci-lint > /dev/null; then \
-		golangci-lint run ./...; \
-	else \
+test: ## Run tests with race detector
+	go test -race -cover ./...
+
+vet: ## Run go vet
+	go vet ./...
+
+lint: vet ## Lint code with golangci-lint
+	@command -v golangci-lint > /dev/null || { \
 		echo "golangci-lint not installed"; \
-		echo "Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		echo "Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
 		exit 1; \
-	fi
+	}
+	golangci-lint run ./...
 
-# Build Docker image
-docker:
-	@echo "Building Docker image..."
-	@docker build -t oci-prometheus-sd-proxy:latest .
-	@echo "Image built: oci-prometheus-sd-proxy:latest"
+fmt: ## Format code
+	gofmt -w .
 
-# Download and tidy dependencies
-tidy:
-	@echo "Tidying dependencies..."
-	@go mod download
-	@go mod tidy
+docker: ## Build Docker image
+	docker build -t $(IMAGE):latest .
 
-# Run locally
-run:
-	@bash -c 'set -a; [ -f .env ] && . .env; set +a; \
+tidy: ## Download and tidy dependencies
+	go mod download
+	go mod tidy
+
+run: ## Run locally (needs SERVER_TOKEN in env or .env)
+	@set -a; [ -f .env ] && . .env; set +a; \
 	if [ -z "$$SERVER_TOKEN" ]; then \
-		echo "Error: SERVER_TOKEN environment variable not set"; \
-		echo "Usage: SERVER_TOKEN=your-token make run"; \
+		echo "SERVER_TOKEN not set. Export it or add to .env"; \
 		exit 1; \
 	fi; \
-	echo "Running locally (token: $$SERVER_TOKEN)..."; \
-	go run ./cmd/server'
+	go run ./cmd/server
 
-# Clean build artifacts
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -rf bin/
-	@go clean
-
-# Default target
-.DEFAULT_GOAL := help
+clean: ## Remove build artifacts
+	rm -rf bin/
+	go clean

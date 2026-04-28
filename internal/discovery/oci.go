@@ -174,9 +174,11 @@ func (d *tenancyDiscoverer) discoverCompartment(ctx context.Context, compartment
 		return nil, fmt.Errorf("list instances in compartment %q: %w", compartmentID, err)
 	}
 
+	tagFilterEnabled := d.cfg.Discovery.TagKey != "" && d.cfg.Discovery.TagValue != ""
+
 	var groups []TargetGroup
 	for _, instance := range instances {
-		if !hasTag(instance, d.cfg.Discovery.TagKey, d.cfg.Discovery.TagValue) {
+		if tagFilterEnabled && !hasTag(instance, d.cfg.Discovery.TagKey, d.cfg.Discovery.TagValue) {
 			continue
 		}
 
@@ -419,6 +421,15 @@ func buildLabels(
 	// Expose all freeform tags as __meta_oci_tag_<key>
 	for k, v := range instance.FreeformTags {
 		labels["__meta_oci_tag_"+sanitizeLabelKey(k)] = v
+	}
+
+	// Expose all defined tags as __meta_oci_defined_tag_<namespace>_<key>
+	for ns, nsMap := range instance.DefinedTags {
+		for k, v := range nsMap {
+			if s, ok := v.(string); ok {
+				labels["__meta_oci_defined_tag_"+sanitizeLabelKey(ns)+"_"+sanitizeLabelKey(k)] = s
+			}
+		}
 	}
 
 	return labels

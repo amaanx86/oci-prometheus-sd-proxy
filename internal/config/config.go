@@ -53,8 +53,6 @@ func defaults() *Config {
 			Port: 8080,
 		},
 		Discovery: DiscoveryConfig{
-			TagKey:          "monitoring",
-			TagValue:        "enabled",
 			LinuxPort:       9100,
 			WindowsPort:     9182,
 			RefreshInterval: 5 * time.Minute,
