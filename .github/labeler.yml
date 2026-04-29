@@ -1,0 +1,59 @@
+go:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.go'
+          - 'go.mod'
+          - 'go.sum'
+
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'Makefile'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '*.md'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'Dockerfile'
+          - 'docker-compose*.yml'
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'internal/config/**'
+          - 'config.yaml'
+          - '*.yaml'
+          - '!.github/**'
+
+discovery:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'internal/discovery/**'
+
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'internal/handler/**'
+          - 'internal/server/**'
+          - 'internal/middleware/**'
+
+deployment:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'deploy/**'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'go.mod'
+          - 'go.sum'
