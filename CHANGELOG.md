@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.3] - 2026-05-14
+
+### Fixed
+
+- PR labeler now falls back to `GITHUB_TOKEN` when `BOT_PAT` is unavailable, fixing labeling on Dependabot-opened PRs ([#56](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/56))
+
+### CI
+
+- Added issue-notify workflow to tag maintainer on new issues ([#48](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/48))
+- Added PR auto-labeling based on changed file paths ([#50](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/50))
+- Bumped `actions/github-script` from 7 to 9 ([#52](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/52))
+- Bumped `actions/labeler` from 5 to 6 ([#51](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/51))
+- Bumped `sigstore/cosign-installer` from 4.1.1 to 4.1.2 ([#54](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/54))
+
+### Changed
+
+- Bumped `github.com/oracle/oci-go-sdk/v65` ([#55](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/55))
+
 ## [1.5.2] - 2026-04-29
 
 ### Added
@@ -280,7 +298,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.3...HEAD
+[1.5.3]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.4.2...v1.5.0
