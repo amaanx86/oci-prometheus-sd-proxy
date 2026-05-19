@@ -11,6 +11,8 @@
 
 A lightweight Go service that implements the [Prometheus HTTP Service Discovery](https://prometheus.io/docs/prometheus/latest/http_sd/) API for [Oracle Cloud Infrastructure](https://www.oracle.com/cloud/). It dynamically discovers compute instances across multiple OCI tenancies and compartments, filters them by tag, and returns their metadata in Prometheus-compatible HTTP SD format.
 
+> **Why HTTP SD over native OCI SD?** A native integration was proposed in [prometheus/prometheus#10226](https://github.com/prometheus/prometheus/issues/10226) but closed - Prometheus maintainers explicitly prefer HTTP SD to keep the binary lean. This approach also means independent releases, centralised caching across Prometheus replicas, and multi-tenancy without per-scrape-config workarounds.
+
 ## Architecture
 
 ![oci-sd-proxy-arch](https://github.com/user-attachments/assets/a7d87901-1e67-4016-92b6-df66f5603b28)
