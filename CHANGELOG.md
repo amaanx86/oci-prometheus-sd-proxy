@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.4] - 2026-05-26
+
+### Build
+
+- Added `docker-up`, `docker-down`, `docker-logs`, and `docker-test` Makefile targets for local Docker testing flow. `docker-up` always rebuilds the image with no cache; `docker-down` removes containers, volumes, and orphans.
+
+### Changed
+
+- Bumped `github.com/oracle/oci-go-sdk/v65` to `v65.115.0` ([#64](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/64))
+- Migrated dependency automation from Dependabot to Renovate ([#60](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/60), [#67](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/67))
+
+### CI
+
+- Bumped `docker/build-push-action` to `v7.2.0` ([#70](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/70))
+- Bumped `docker/login-action` to `v4.2.0` ([#71](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/71))
+- Bumped `docker/metadata-action` to `v6.1.0` ([#72](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/72))
+- Bumped `docker/setup-buildx-action` to `v4.1.0` ([#73](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/73))
+
+### Documentation
+
+- Bumped `sphinx` to `v9` ([#62](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/62), [#69](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/69))
+- Bumped `furo` to `v2025` ([#61](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/61), [#65](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/65))
+- Bumped `myst-parser` to `v5` ([#68](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/68))
+
 ## [1.5.3] - 2026-05-14
 
 ### Fixed
@@ -298,7 +322,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.3...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.4...HEAD
+[1.5.4]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.0...v1.5.1

@@ -4,7 +4,8 @@ VERSION    := $(shell git describe --tags --abbrev=0 2>/dev/null || echo dev)
 LDFLAGS    := -s -w -X main.version=$(VERSION)
 
 .DEFAULT_GOAL := help
-.PHONY: help build build-linux test vet lint fmt docker tidy run clean
+.PHONY: help build build-linux test vet lint fmt docker tidy run clean \
+        docker-up docker-down docker-test docker-logs
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-15s %s\n", $$1, $$2}'
@@ -48,6 +49,23 @@ run: ## Run locally (needs SERVER_TOKEN in env or .env)
 		exit 1; \
 	fi; \
 	go run ./cmd/server
+
+docker-up: ## Rebuild image (no cache) and start local Docker stack
+	docker-compose -f docker-compose-local.yml build --no-cache
+	docker-compose -f docker-compose-local.yml up -d
+
+docker-down: ## Stop local Docker stack and remove containers, volumes, and orphans
+	docker-compose -f docker-compose-local.yml down -v --remove-orphans
+
+docker-logs: ## Tail logs from local Docker stack
+	docker-compose -f docker-compose-local.yml logs -f
+
+docker-test: ## Hit /v1/targets against the local Docker stack (reads SERVER_TOKEN from .env)
+	@if [ ! -f .env ]; then echo "No .env file found"; exit 1; fi
+	@TOKEN=$$(grep -E '^SERVER_TOKEN=' .env | cut -d= -f2 | tr -d '"'"'"' '); \
+	if [ -z "$$TOKEN" ]; then echo "SERVER_TOKEN not found in .env"; exit 1; fi; \
+	echo "GET http://localhost:8080/v1/targets"; \
+	curl -sf -H "Authorization: Bearer $$TOKEN" http://localhost:8080/v1/targets | jq .
 
 clean: ## Remove build artifacts
 	rm -rf bin/
