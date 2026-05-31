@@ -43,6 +43,42 @@ ociPrivateKeySecret:
 # Base directory for the mounted key file; must align with config.tenancies[].private_key_path.
 ociPrivateKeyMountPath: /etc/oci-sd/keys
 
+podSecurityContext:
+  # Distroless nonroot image runs as UID 65532; omit runAsUser to use the image default.
+  runAsNonRoot: true
+
+# Container securityContext. Compatible with distroless nonroot and read-only mounts at /etc/oci-sd.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# HTTP probes use named port "http". Readiness checks /readyz only (not OCI discovery health).
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 2
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /readyz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 2
+  successThreshold: 1
+  failureThreshold: 3
+
 # Non-sensitive config.yaml content (rendered into a ConfigMap).
 # Do not put server.token or private key PEM content here.
 config:
