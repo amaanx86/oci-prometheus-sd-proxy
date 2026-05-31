@@ -1,8 +1,7 @@
 # Default values for oci-prometheus-sd-proxy.
 #
 # Sensitive values (SERVER_TOKEN, OCI API private keys) must NOT be placed here.
-# Create Kubernetes Secrets out-of-band and reference them via serverTokenSecret
-# and ociPrivateKeySecret in a later chart slice.
+# Create Kubernetes Secrets out-of-band and set serverTokenSecret / ociPrivateKeySecret names.
 
 replicaCount: 1
 
@@ -30,23 +29,22 @@ containerPort: 8080
 configPath: /etc/oci-sd/config.yaml
 
 # Existing Secret holding the bearer token for /v1/targets (SERVER_TOKEN).
-# Do not create this Secret from Helm values.
+# Create before install, e.g. kubectl create secret generic oci-sd-server-token --from-literal=server-token=...
 serverTokenSecret:
-  name: ""
+  name: oci-sd-server-token
   key: server-token
 
 # Existing Secret holding the OCI API private key PEM file.
-# Do not create this Secret from Helm values.
+# Create before install, e.g. kubectl create secret generic oci-sd-oci-key --from-file=api_key.pem=...
 ociPrivateKeySecret:
-  name: ""
+  name: oci-sd-oci-key
   key: api_key.pem
 
-# Directory where the OCI private key Secret is mounted inside the container.
+# Base directory for the mounted key file; must align with config.tenancies[].private_key_path.
 ociPrivateKeyMountPath: /etc/oci-sd/keys
 
 # Non-sensitive config.yaml content (rendered into a ConfigMap).
-# Do not put server.token or private key PEM content here; SERVER_TOKEN comes
-# from an existing Secret in a later slice, and the key file from ociPrivateKeySecret.
+# Do not put server.token or private key PEM content here.
 config:
   server:
     port: 8080
@@ -65,5 +63,4 @@ config:
       user_id: ocid1.user.oc1..example
       fingerprint: "00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff"
       private_key_path: /etc/oci-sd/keys/api_key.pem
-      passphrase: ""
       compartments: []

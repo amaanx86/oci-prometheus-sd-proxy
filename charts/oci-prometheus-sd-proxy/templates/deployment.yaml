@@ -22,6 +22,11 @@ spec:
           env:
             - name: CONFIG_PATH
               value: {{ .Values.configPath | quote }}
+            - name: SERVER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.serverTokenSecret.name | quote }}
+                  key: {{ .Values.serverTokenSecret.key | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}
@@ -31,7 +36,14 @@ spec:
               mountPath: {{ .Values.configPath | quote }}
               subPath: config.yaml
               readOnly: true
+            - name: oci-private-key
+              mountPath: {{ printf "%s/%s" .Values.ociPrivateKeyMountPath .Values.ociPrivateKeySecret.key | quote }}
+              subPath: {{ .Values.ociPrivateKeySecret.key | quote }}
+              readOnly: true
       volumes:
         - name: config
           configMap:
             name: {{ include "oci-prometheus-sd-proxy.fullname" . }}
+        - name: oci-private-key
+          secret:
+            secretName: {{ .Values.ociPrivateKeySecret.name | quote }}
