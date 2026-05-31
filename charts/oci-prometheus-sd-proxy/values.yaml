@@ -1,0 +1,50 @@
+# Default values for oci-prometheus-sd-proxy.
+#
+# Sensitive values (SERVER_TOKEN, OCI API private keys) must NOT be placed here.
+# Create Kubernetes Secrets out-of-band and reference them via serverTokenSecret
+# and ociPrivateKeySecret in a later chart slice.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/amaanx86/oci-prometheus-sd-proxy
+  # Documented quick-start tag; pin a release semver in production.
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  # Templates not included in this slice; defaults for later Deployment wiring.
+  create: true
+  # When create is true and name is empty, the chart fullname is used.
+  name: ""
+  annotations: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+# HTTP port the application listens on (shared by future Deployment and Service).
+containerPort: 8080
+
+# Path passed to CONFIG_PATH; config file mount added in a later slice.
+configPath: /etc/oci-sd/config.yaml
+
+# Existing Secret holding the bearer token for /v1/targets (SERVER_TOKEN).
+# Do not create this Secret from Helm values.
+serverTokenSecret:
+  name: ""
+  key: server-token
+
+# Existing Secret holding the OCI API private key PEM file.
+# Do not create this Secret from Helm values.
+ociPrivateKeySecret:
+  name: ""
+  key: api_key.pem
+
+# Directory where the OCI private key Secret is mounted inside the container.
+ociPrivateKeyMountPath: /etc/oci-sd/keys
+
+# Placeholder for config.yaml content; ConfigMap mount added in a later slice.
+# Tenancy credentials and discovery settings belong here—not in Helm values
+# when they include secrets.
+config: {}
