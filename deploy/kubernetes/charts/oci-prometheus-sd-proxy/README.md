@@ -70,7 +70,7 @@ kubectl create secret generic oci-sd-oci-key \
 Create Secrets in the target namespace, then install:
 
 ```bash
-helm install oci-sd ./charts/oci-prometheus-sd-proxy \
+helm install oci-sd ./deploy/kubernetes/charts/oci-prometheus-sd-proxy \
   --namespace monitoring \
   --create-namespace
 ```
@@ -112,7 +112,7 @@ config:
 Apply with:
 
 ```bash
-helm install oci-sd ./charts/oci-prometheus-sd-proxy -f my-values.yaml -n monitoring
+helm install oci-sd ./deploy/kubernetes/charts/oci-prometheus-sd-proxy -f my-values.yaml -n monitoring
 ```
 
 ## config.yaml and CONFIG_PATH
@@ -155,8 +155,8 @@ Replace the URL host with your release fullname and namespace. Use a Prometheus 
 ## Validation
 
 ```bash
-helm lint charts/oci-prometheus-sd-proxy
-helm template oci-sd charts/oci-prometheus-sd-proxy --namespace monitoring
+helm lint deploy/kubernetes/charts/oci-prometheus-sd-proxy
+helm template oci-sd deploy/kubernetes/charts/oci-prometheus-sd-proxy --namespace monitoring
 ```
 
 ## Image
