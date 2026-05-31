@@ -152,6 +152,76 @@ scrape_configs:
 
 Replace the URL host with your release fullname and namespace. Use a Prometheus Secret or external secret manager for `<your-server-token>`—not Helm values.
 
+## Using with kube-prometheus-stack
+
+This chart works with [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack). Install and configure kube-prometheus-stack **separately**—this chart deploys only `oci-prometheus-sd-proxy` and does not install Prometheus or configure scrape jobs for you.
+
+The proxy exposes Prometheus HTTP service discovery at:
+
+```text
+http://<release-fullname>.<namespace>.svc:8080/v1/targets
+```
+
+For a release named `oci-sd` in namespace `monitoring`, that is typically:
+
+```text
+http://oci-sd-oci-prometheus-sd-proxy.monitoring.svc:8080/v1/targets
+```
+
+**ServiceMonitor is intentionally not included.** This proxy is not a normal `/metrics` scrape target—it returns discovered OCI compute targets via HTTP SD. A ServiceMonitor would scrape the proxy itself rather than the instances the proxy discovers. [ScrapeConfig](https://prometheus-operator.dev/docs/developer/scrapeconfig/) support may be considered later but is not part of this MVP.
+
+Wire kube-prometheus-stack to the proxy using an **existing** additional scrape config Secret (managed outside this chart). Pin the kube-prometheus-stack chart version:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+  - name: kube-prometheus-stack
+    repo: https://prometheus-community.github.io/helm-charts
+    version: 72.6.2
+    releaseName: prometheus-stack
+    namespace: monitoring
+    valuesFile: helm-values.yaml
+    includeCRDs: true
+```
+
+In `helm-values.yaml`, enable the additional scrape config Secret reference:
+
+```yaml
+prometheus:
+  prometheusSpec:
+    additionalScrapeConfigsSecret:
+      enabled: true
+      name: prometheus-additional-scrape-configs
+      key: additional-scrape-configs.yaml
+```
+
+Create the Secret separately—do **not** commit tokens or scrape config files containing real credentials to Git:
+
+```bash
+kubectl create secret generic prometheus-additional-scrape-configs \
+  --namespace monitoring \
+  --from-file=additional-scrape-configs.yaml=/path/to/additional-scrape-configs.yaml
+```
+
+Example `additional-scrape-configs.yaml` (placeholder token only; use the same value as `SERVER_TOKEN` in the proxy Secret):
+
+```yaml
+- job_name: oci-compute
+  http_sd_configs:
+    - url: http://oci-sd-oci-prometheus-sd-proxy.monitoring.svc:8080/v1/targets
+      authorization:
+        type: Bearer
+        credentials: <your-server-token>
+      refresh_interval: 60s
+  relabel_configs:
+    - source_labels: [__meta_oci_instance_name]
+      target_label: instance
+```
+
+Store the Bearer token securely (e.g. sealed-secrets, external-secrets, or a local file excluded from version control). Replace the URL host with your release fullname and namespace.
+
 ## Validation
 
 ```bash
