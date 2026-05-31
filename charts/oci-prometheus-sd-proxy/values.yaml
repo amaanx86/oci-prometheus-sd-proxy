@@ -12,7 +12,6 @@ image:
   pullPolicy: IfNotPresent
 
 serviceAccount:
-  # Templates not included in this slice; defaults for later Deployment wiring.
   create: true
   # When create is true and name is empty, the chart fullname is used.
   name: ""
@@ -22,7 +21,7 @@ service:
   type: ClusterIP
   port: 8080
 
-# HTTP port the application listens on (shared by future Deployment and Service).
+# HTTP port the application listens on; keep config.server.port in sync when changed.
 containerPort: 8080
 
 # Path where config.yaml is mounted and passed to CONFIG_PATH.

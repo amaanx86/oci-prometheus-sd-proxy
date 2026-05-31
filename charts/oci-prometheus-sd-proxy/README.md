@@ -154,7 +154,7 @@ Replace the URL host with your release fullname and namespace. Use a Prometheus 
 
 ```bash
 helm lint charts/oci-prometheus-sd-proxy
-helm template oci-sd charts/oci-prometheus-sd-proxy
+helm template oci-sd charts/oci-prometheus-sd-proxy --namespace monitoring
 ```
 
 ## Image
