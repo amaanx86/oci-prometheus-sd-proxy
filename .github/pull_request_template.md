@@ -13,7 +13,7 @@ Fixes #(issue)
 
 ## Testing
 
-**New or changed functionality requires automated tests** (see [CONTRIBUTING.md](../CONTRIBUTING.md#testing)).
+**New or changed functionality requires automated tests** (see [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md#testing)).
 
 - [ ] `make test` passes (`go test -race -cover ./...`)
 - [ ] New/changed code has corresponding test cases in `*_test.go`
