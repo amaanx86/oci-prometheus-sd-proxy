@@ -1,7 +1,7 @@
 name: PR Labeler
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize]
 
 jobs:
@@ -13,6 +13,6 @@ jobs:
     steps:
       - uses: actions/labeler@v6
         with:
-          repo-token: ${{ secrets.BOT_PAT || secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml
           sync-labels: true
