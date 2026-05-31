@@ -33,6 +33,8 @@ All commits and tags from the maintainer are GPG-signed. You can verify them usi
 | Algorithm | RSA 4096 |
 | Keyserver | https://keyserver.ubuntu.com/pks/lookup?search=amaanulhaq.s%40outlook.com&op=get |
 
+> **Note:** GitHub may display the ID of a signing subkey (e.g. `2BB500FE5A696562`) rather than the primary key ID. Commits and tags may be signed by the documented primary OpenPGP key or by signing subkeys under that primary key. You can confirm a subkey belongs to the primary key by running `gpg --list-keys --with-subkey-fingerprints FC47DEE803DB612A`.
+
 Fetch and verify:
 
 ```bash
