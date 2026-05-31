@@ -26,7 +26,7 @@ service:
 # HTTP port the application listens on (shared by future Deployment and Service).
 containerPort: 8080
 
-# Path passed to CONFIG_PATH; config file mount added in a later slice.
+# Path where config.yaml is mounted and passed to CONFIG_PATH.
 configPath: /etc/oci-sd/config.yaml
 
 # Existing Secret holding the bearer token for /v1/targets (SERVER_TOKEN).
@@ -44,7 +44,26 @@ ociPrivateKeySecret:
 # Directory where the OCI private key Secret is mounted inside the container.
 ociPrivateKeyMountPath: /etc/oci-sd/keys
 
-# Placeholder for config.yaml content; ConfigMap mount added in a later slice.
-# Tenancy credentials and discovery settings belong here—not in Helm values
-# when they include secrets.
-config: {}
+# Non-sensitive config.yaml content (rendered into a ConfigMap).
+# Do not put server.token or private key PEM content here; SERVER_TOKEN comes
+# from an existing Secret in a later slice, and the key file from ociPrivateKeySecret.
+config:
+  server:
+    port: 8080
+  discovery:
+    tag_key: monitoring
+    tag_value: enabled
+    linux_port: 9100
+    windows_port: 9182
+    refresh_interval: 5m
+    rate_limit_rps: 10.0
+  tenancies:
+    - name: my-tenancy
+      auth_type: api_key
+      region: us-ashburn-1
+      tenancy_id: ocid1.tenancy.oc1..example
+      user_id: ocid1.user.oc1..example
+      fingerprint: "00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff"
+      private_key_path: /etc/oci-sd/keys/api_key.pem
+      passphrase: ""
+      compartments: []

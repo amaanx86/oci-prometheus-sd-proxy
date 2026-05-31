@@ -19,7 +19,19 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: CONFIG_PATH
+              value: {{ .Values.configPath | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}
               protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: {{ .Values.configPath | quote }}
+              subPath: config.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "oci-prometheus-sd-proxy.fullname" . }}
