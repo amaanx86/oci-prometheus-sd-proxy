@@ -19,6 +19,8 @@ This is an **MVP chart**. It deploys the proxy only. Operators supply OCI config
 - OCI IAM policies, dynamic groups, or network/firewall rules
 - [ServiceMonitor](https://github.com/prometheus-operator/prometheus-operator) (intentionally omitted from this MVP)
 - [ScrapeConfig](https://prometheus-operator.dev/docs/developer/scrapeconfig/) (possible later integration; out of scope here)
+- Chart publishing to GHCR or GitHub Pages
+- Helm chart release automation
 
 ## Prerequisites
 
