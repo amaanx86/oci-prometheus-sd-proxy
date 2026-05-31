@@ -2,7 +2,7 @@
 
 ## Security
 
-Found a security vulnerability? Do not open a GitHub issue. See [SECURITY.MD](SECURITY.MD) for responsible disclosure guidelines.
+Found a security vulnerability? Do not open a GitHub issue. See [SECURITY.md](SECURITY.md) for responsible disclosure guidelines.
 
 ## Setup
 
