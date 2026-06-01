@@ -1,0 +1,101 @@
+# Default values for oci-prometheus-sd-proxy.
+#
+# Sensitive values (SERVER_TOKEN, OCI API private keys) must NOT be placed here.
+# Create Kubernetes Secrets out-of-band and set serverTokenSecret / ociPrivateKeySecret names.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/amaanx86/oci-prometheus-sd-proxy
+  # Documented quick-start tag; pin a release semver in production.
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  # When create is true and name is empty, the chart fullname is used.
+  name: ""
+  annotations: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+# HTTP port the application listens on; keep config.server.port in sync when changed.
+containerPort: 8080
+
+# Path where config.yaml is mounted and passed to CONFIG_PATH.
+configPath: /etc/oci-sd/config.yaml
+
+# Existing Secret holding the bearer token for /v1/targets (SERVER_TOKEN).
+# Create before install, e.g. kubectl create secret generic oci-sd-server-token --from-literal=server-token=...
+serverTokenSecret:
+  name: oci-sd-server-token
+  key: server-token
+
+# Existing Secret holding the OCI API private key PEM file.
+# Create before install, e.g. kubectl create secret generic oci-sd-oci-key --from-file=api_key.pem=...
+ociPrivateKeySecret:
+  name: oci-sd-oci-key
+  key: api_key.pem
+
+# Base directory for the mounted key file; must align with config.tenancies[].private_key_path.
+ociPrivateKeyMountPath: /etc/oci-sd/keys
+
+podSecurityContext:
+  # Distroless nonroot image runs as UID 65532; omit runAsUser to use the image default.
+  runAsNonRoot: true
+
+# Container securityContext. Compatible with distroless nonroot and read-only mounts at /etc/oci-sd.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# HTTP probes use named port "http". Readiness checks /readyz only (not OCI discovery health).
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 2
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /readyz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 2
+  successThreshold: 1
+  failureThreshold: 3
+
+# Non-sensitive config.yaml content (rendered into a ConfigMap).
+# Do not put server.token or private key PEM content here.
+config:
+  server:
+    port: 8080
+  discovery:
+    tag_key: monitoring
+    tag_value: enabled
+    linux_port: 9100
+    windows_port: 9182
+    refresh_interval: 5m
+    rate_limit_rps: 10.0
+  tenancies:
+    - name: my-tenancy
+      auth_type: api_key
+      region: us-ashburn-1
+      tenancy_id: ocid1.tenancy.oc1..example
+      user_id: ocid1.user.oc1..example
+      fingerprint: "00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff"
+      private_key_path: /etc/oci-sd/keys/api_key.pem
+      compartments: []
