@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "oci-prometheus-sd-proxy.fullname" . }}
+  labels:
+    {{- include "oci-prometheus-sd-proxy.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+      appProtocol: http
+  selector:
+    {{- include "oci-prometheus-sd-proxy.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,30 @@
+OCI Prometheus SD Proxy has been installed.
+
+Release:    {{ .Release.Name }}
+Namespace:  {{ .Release.Namespace }}
+
+In-cluster HTTP SD endpoint:
+  http://{{ include "oci-prometheus-sd-proxy.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/v1/targets
+
+Required Secrets (must exist before the pod starts):
+  - {{ .Values.serverTokenSecret.name }} (key: {{ .Values.serverTokenSecret.key }})
+  {{- if .Values.ociPrivateKeySecret.enabled }}
+  - {{ .Values.ociPrivateKeySecret.name }} (key: {{ .Values.ociPrivateKeySecret.key }})
+  {{- end }}
+
+{{- if .Values.scrapeConfig.enabled }}
+
+ScrapeConfig "{{ include "oci-prometheus-sd-proxy.fullname" . }}" created.
+Verify its labels match your PrometheusSpec.scrapeConfigSelector:
+  {{- range $k, $v := .Values.scrapeConfig.labels }}
+  {{ $k }}: {{ $v }}
+  {{- end }}
+{{- else }}
+
+Point Prometheus at the HTTP SD endpoint above using http_sd_configs.
+To use the ScrapeConfig CRD (prometheus-operator >= 0.65), set:
+  scrapeConfig.enabled: true
+  scrapeConfig.labels: <match your PrometheusSpec.scrapeConfigSelector>
+
+See chart README for full Prometheus configuration examples.
+{{- end }}

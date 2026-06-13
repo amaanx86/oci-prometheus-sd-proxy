@@ -1,8 +1,8 @@
-# OCI SD Proxy Production Deployment
+# OCI SD Proxy - Docker Compose for Docker Deployment
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/amaanx86/oci-prometheus-sd-proxy)](https://goreportcard.com/report/github.com/amaanx86/oci-prometheus-sd-proxy)
 [![GitHub Release](https://img.shields.io/github/v/release/amaanx86/oci-prometheus-sd-proxy)](https://github.com/amaanx86/oci-prometheus-sd-proxy/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Docker Image](https://img.shields.io/badge/Docker-ghcr.io-blue?logo=docker)](https://github.com/amaanx86/oci-prometheus-sd-proxy/pkgs/container/oci-prometheus-sd-proxy)
 
 Quick setup for running oci-prometheus-sd-proxy with Docker Compose.
@@ -52,7 +52,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/v1/targets
 All settings are in `.env`:
 
 | Variable | Default | Description |
-|----------|---------|-------------|
+| -------- | ------- | ----------- |
 | `SERVER_PORT` | 8080 | HTTP port |
 | `SERVER_TOKEN` | - | **Required**: Bearer token for API auth |
 | `DISCOVERY_TAG_KEY` | (empty) | OCI tag key to filter instances. Omit to discover all. |
@@ -64,7 +64,7 @@ All settings are in `.env`:
 
 ## File Structure
 
-```
+```text
 deploy/docker/
 ├── docker-compose-production.yml  # Docker Compose config
 ├── .env.example                   # Environment template (copy to .env)

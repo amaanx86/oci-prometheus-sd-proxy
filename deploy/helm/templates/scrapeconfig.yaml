@@ -1,0 +1,28 @@
+{{- if .Values.scrapeConfig.enabled }}
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: {{ include "oci-prometheus-sd-proxy.fullname" . }}
+  labels:
+    {{- include "oci-prometheus-sd-proxy.labels" . | nindent 4 }}
+    {{- with .Values.scrapeConfig.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  jobName: {{ .Values.scrapeConfig.jobName | quote }}
+  httpSDConfigs:
+    - url: "http://{{ include "oci-prometheus-sd-proxy.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/v1/targets"
+      refreshInterval: {{ .Values.scrapeConfig.refreshInterval }}
+      authorization:
+        credentials:
+          name: {{ .Values.serverTokenSecret.name | quote }}
+          key: {{ .Values.serverTokenSecret.key | quote }}
+  {{- with .Values.scrapeConfig.relabelings }}
+  relabelings:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.scrapeConfig.metricRelabelings }}
+  metricRelabelings:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
