@@ -1,0 +1,198 @@
+# Default values for oci-prometheus-sd-proxy.
+#
+# Sensitive values (SERVER_TOKEN, OCI API private keys) must NOT be placed here.
+# Create Kubernetes Secrets out-of-band and reference them via serverTokenSecret / ociPrivateKeySecret.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/amaanax86/oci-prometheus-sd-proxy
+  # Documented quick-start tag; pin a release semver or digest in production.
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Override the chart name used in resource names.
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  # When create is true and name is empty, the chart fullname is used.
+  name: ""
+  annotations: {}
+
+# Annotations and labels added to the Pod (not the Deployment).
+# Adding checksum/config here is handled automatically by the Deployment template.
+podAnnotations: {}
+podLabels: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+# HTTP port the application listens on; keep config.server.port in sync when changed.
+containerPort: 8080
+
+# Path where config.yaml is mounted and passed to CONFIG_PATH.
+configPath: /etc/oci-sd/config.yaml
+
+# Existing Secret holding the bearer token for /v1/targets (SERVER_TOKEN).
+# Create before install:
+#   kubectl create secret generic oci-sd-server-token \
+#     --namespace monitoring --from-literal=server-token=<token>
+serverTokenSecret:
+  name: oci-sd-server-token
+  key: server-token
+
+# Existing Secret holding the OCI API private key PEM file.
+# Set enabled: false when all tenancies use auth_type: instance_principal (no key needed).
+# Create before install:
+#   kubectl create secret generic oci-sd-oci-key \
+#     --namespace monitoring --from-file=api_key.pem=/path/to/api_key.pem
+ociPrivateKeySecret:
+  enabled: true
+  name: oci-sd-oci-key
+  key: api_key.pem
+
+# Base directory for the mounted key file; must align with config.tenancies[].private_key_path.
+ociPrivateKeyMountPath: /etc/oci-sd/keys
+
+podSecurityContext:
+  # Distroless nonroot image runs as UID 65532; do not set runAsUser to override the image default.
+  runAsNonRoot: true
+
+# Container securityContext. Compatible with distroless nonroot and read-only mounts at /etc/oci-sd.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# Resource requests and limits. Recommended to set for production to enable proper scheduling.
+resources: {}
+# Recommended production values:
+# limits:
+#   cpu: 200m
+#   memory: 256Mi
+# requests:
+#   cpu: 50m
+#   memory: 64Mi
+
+# HTTP probes use named port "http".
+#
+# The proxy performs a synchronous OCI API refresh before the HTTP server
+# binds. On large tenancies (50+ compartments) this easily exceeds 60s.
+# A startupProbe gates liveness and readiness until the server is up,
+# preventing the restart loop that would otherwise occur.
+#
+# startupProbe window: failureThreshold * periodSeconds = 10 * 30 = 5 minutes.
+# Raise failureThreshold if you have many large tenancies.
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /readyz
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Deployment update strategy.
+updateStrategy: {}
+# type: RollingUpdate
+# rollingUpdate:
+#   maxSurge: 1
+#   maxUnavailable: 0
+
+# Number of old ReplicaSets to retain.
+revisionHistoryLimit: 3
+
+# PodDisruptionBudget to limit voluntary disruptions during node maintenance.
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+priorityClassName: ""
+
+# Extra environment variables injected into the container.
+extraEnv: []
+# - name: HTTP_PROXY
+#   value: http://proxy.example.com:3128
+
+# Extra volumes and mounts (e.g. for additional OCI key secrets in multi-tenancy setups).
+extraVolumes: []
+extraVolumeMounts: []
+
+# Non-sensitive config.yaml content (rendered into a ConfigMap).
+# Do not put server.token or private key PEM content here.
+config:
+  server:
+    port: 8080
+  discovery:
+    tag_key: monitoring
+    tag_value: enabled
+    linux_port: 9100
+    windows_port: 9182
+    refresh_interval: 5m
+    rate_limit_rps: 10.0
+  tenancies:
+    - name: my-tenancy
+      auth_type: api_key
+      region: us-ashburn-1
+      tenancy_id: ocid1.tenancy.oc1..example
+      user_id: ocid1.user.oc1..example
+      fingerprint: "00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff"
+      private_key_path: /etc/oci-sd/keys/api_key.pem
+      compartments: []
+
+# ScrapeConfig CRD (monitoring.coreos.com/v1alpha1, prometheus-operator >= 0.65).
+# Reuses serverTokenSecret - no credential duplication.
+# Labels must match your PrometheusSpec.scrapeConfigSelector.
+scrapeConfig:
+  enabled: false
+  labels: {}
+  jobName: oci-compute
+  # How often Prometheus refreshes the target list from the proxy.
+  refreshInterval: 60s
+  # Standard OCI meta label relabelings. Extend or override as needed.
+  relabelings:
+    - sourceLabels: [__meta_oci_instance_name]
+      targetLabel: instance
+    - sourceLabels: [__meta_oci_tenancy_name]
+      targetLabel: tenancy
+    - sourceLabels: [__meta_oci_region]
+      targetLabel: region
+    - sourceLabels: [__meta_oci_compartment_name]
+      targetLabel: compartment
+    - sourceLabels: [__meta_oci_instance_shape]
+      targetLabel: shape
+    - sourceLabels: [__meta_oci_availability_domain]
+      targetLabel: availability_domain
+  metricRelabelings: []
