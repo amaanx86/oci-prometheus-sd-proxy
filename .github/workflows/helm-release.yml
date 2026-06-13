@@ -27,11 +27,16 @@ jobs:
           helm lint deploy/helm
           helm template oci-sd deploy/helm > /dev/null
 
-      - name: Parse version
+      - name: Parse and validate version
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/helm-v}
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          TAG_VERSION=${GITHUB_REF#refs/tags/helm-v}
+          CHART_VERSION=$(grep '^version:' deploy/helm/Chart.yaml | awk '{print $2}')
+          if [ "${TAG_VERSION}" != "${CHART_VERSION}" ]; then
+            echo "::error::Tag version (${TAG_VERSION}) does not match Chart.yaml version (${CHART_VERSION})"
+            exit 1
+          fi
+          echo "version=${TAG_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Package chart
         run: |
