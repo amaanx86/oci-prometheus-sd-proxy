@@ -4,7 +4,7 @@ project = "oci-prometheus-sd-proxy"
 copyright = "2026, Amaan Ul Haq Siddiqui"
 author = "Amaan Ul Haq Siddiqui"
 version = "1.5"
-release = "1.5.4"
+release = "1.5.5"
 
 extensions = [
     "myst_parser",  # Markdown support

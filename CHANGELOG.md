@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2026-06-14
+
+### Fixed
+
+- Fixed multi-platform Docker builds: replaced hardcoded `GOARCH=amd64` with BuildKit `TARGETOS`/`TARGETARCH` args so the `linux/arm64` image variant contains a native ARM64 binary ([#87](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/87))
+
+### Added
+
+- Production-ready Helm chart under `deploy/helm/` with startupProbe, PodDisruptionBudget, ScrapeConfig CRD support, scheduling fields, and extensibility values ([#88](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/88))
+- Helm chart release and publish workflow: packages chart, deploys to GitHub Pages, pushes OCI artifact to GHCR, attaches `.tgz` to GitHub Release ([#90](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/90))
+
+### Changed
+
+- Bumped `github.com/oracle/oci-go-sdk/v65` to `v65.117.1` ([#75](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/75), [#84](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/84), [#86](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/86))
+- Bumped `actions/checkout` to `v6.0.3` ([#83](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/83))
+
+### CI
+
+- Fixed PR labeler workflow to use `pull_request_target` for fork PRs ([#78](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/78))
+- Fixed Helm chart GitHub Release creation before artifact upload ([#90](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/90))
+
+### Documentation
+
+- Fixed broken links in CONTRIBUTING.md and SECURITY.md ([#76](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/76))
+- Clarified GPG signing subkey behavior in SECURITY.md ([#81](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/81))
+
 ## [1.5.4] - 2026-05-26
 
 ### Build
@@ -322,7 +348,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.4...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.5...HEAD
+[1.5.5]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.1...v1.5.2
