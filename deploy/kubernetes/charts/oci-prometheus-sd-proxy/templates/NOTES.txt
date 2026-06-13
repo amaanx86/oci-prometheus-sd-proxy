@@ -1,0 +1,20 @@
+OCI Prometheus SD Proxy (MVP) has been installed.
+
+Release:    {{ .Release.Name }}
+Namespace:  {{ .Release.Namespace }}
+
+In-cluster Service:
+  {{ include "oci-prometheus-sd-proxy.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}
+
+Prometheus HTTP SD endpoint:
+  http://{{ include "oci-prometheus-sd-proxy.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/v1/targets
+  (requires Authorization: Bearer <SERVER_TOKEN>)
+
+Required existing Secrets (not created by this chart):
+  - {{ .Values.serverTokenSecret.name }} (key: {{ .Values.serverTokenSecret.key }}) → SERVER_TOKEN env var
+  - {{ .Values.ociPrivateKeySecret.name }} (key: {{ .Values.ociPrivateKeySecret.key }}) → mounted at {{ .Values.ociPrivateKeyMountPath }}/{{ .Values.ociPrivateKeySecret.key }}
+
+Configure Prometheus separately with http_sd_configs. This chart does not install Prometheus,
+node_exporter, or windows_exporter.
+
+ServiceMonitor and ScrapeConfig are not included in this MVP chart.

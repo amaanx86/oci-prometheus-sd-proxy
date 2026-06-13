@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "oci-prometheus-sd-proxy.fullname" . }}
+  labels:
+    {{- include "oci-prometheus-sd-proxy.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- toYaml .Values.config | nindent 4 }}
