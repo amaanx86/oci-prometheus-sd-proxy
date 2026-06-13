@@ -67,10 +67,11 @@ jobs:
           helm push gh-pages/oci-prometheus-sd-proxy-${{ steps.version.outputs.version }}.tgz \
             oci://ghcr.io/amaanx86
 
-      - name: Upload chart to GitHub Release
+      - name: Create GitHub Release and upload chart
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.ref_name }}" \
+          gh release create "${{ github.ref_name }}" \
             gh-pages/oci-prometheus-sd-proxy-${{ steps.version.outputs.version }}.tgz \
-            --clobber
+            --title "Helm Chart v${{ steps.version.outputs.version }}" \
+            --generate-notes
