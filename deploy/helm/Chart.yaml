@@ -3,7 +3,7 @@ name: oci-prometheus-sd-proxy
 description: Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure compute instances.
 type: application
 version: 1.0.0-rc.1
-appVersion: "1.5.4"
+appVersion: "1.5.5"
 home: https://github.com/amaanax86/oci-prometheus-sd-proxy
 sources:
   - https://github.com/amaanax86/oci-prometheus-sd-proxy
