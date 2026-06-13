@@ -1,0 +1,71 @@
+name: Release and Publish Helm Chart
+
+on:
+  push:
+    tags:
+      - 'helm-v*'
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.3.0
+
+      - name: Validate chart
+        run: |
+          helm lint deploy/helm
+          helm template oci-sd deploy/helm > /dev/null
+
+      - name: Parse version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/helm-v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Package chart
+        run: |
+          mkdir -p gh-pages
+          helm package deploy/helm --destination gh-pages/
+
+      - name: Generate Helm repo index
+        run: |
+          helm repo index gh-pages \
+            --url https://amaanx86.github.io/oci-prometheus-sd-proxy
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
+          keep_files: true
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push chart to GHCR (OCI)
+        run: |
+          helm push gh-pages/oci-prometheus-sd-proxy-${{ steps.version.outputs.version }}.tgz \
+            oci://ghcr.io/amaanx86
+
+      - name: Upload chart to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" \
+            gh-pages/oci-prometheus-sd-proxy-${{ steps.version.outputs.version }}.tgz \
+            --clobber
