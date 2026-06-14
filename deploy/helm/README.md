@@ -1,11 +1,16 @@
-# OCI SD Proxy - Helm Chart for K8S Deployment
+# OCI SD Proxy - Helm Chart for Kubernetes Deployment
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/amaanx86/oci-prometheus-sd-proxy)](https://goreportcard.com/report/github.com/amaanx86/oci-prometheus-sd-proxy)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/oci-prometheus-sd-proxy)](https://artifacthub.io/packages/search?repo=oci-prometheus-sd-proxy)
 [![GitHub Release](https://img.shields.io/github/v/release/amaanx86/oci-prometheus-sd-proxy)](https://github.com/amaanx86/oci-prometheus-sd-proxy/releases)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Go Report Card](https://goreportcard.com/badge/github.com/amaanx86/oci-prometheus-sd-proxy)](https://goreportcard.com/report/github.com/amaanx86/oci-prometheus-sd-proxy)
 [![Docker Image](https://img.shields.io/badge/Docker-ghcr.io-blue?logo=docker)](https://github.com/amaanx86/oci-prometheus-sd-proxy/pkgs/container/oci-prometheus-sd-proxy)
+[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12388/badge)](https://www.bestpractices.dev/projects/12388)
 
-Helm chart for [oci-prometheus-sd-proxy](https://github.com/amaanx86/oci-prometheus-sd-proxy) - a Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure compute instances.
+
+Helm chart for [oci-prometheus-sd-proxy](https://github.com/amaanx86/oci-prometheus-sd-proxy) -
+a Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure compute instances.
 
 ## Quick Start
 
@@ -26,7 +31,8 @@ kubectl create secret generic oci-sd-oci-key \
 
 ### 2. Configure OCI Settings
 
-Copy and edit `values.yaml`, filling in your real tenancy OCIDs, region, user, and fingerprint under `config.tenancies`. Do not put the private key or token here.
+Copy and edit `values.yaml`, filling in your real tenancy OCIDs, region, user, and fingerprint
+under `config.tenancies`. Do not put the private key or token here.
 
 ### 3. Install
 
@@ -72,7 +78,8 @@ curl -H "Authorization: Bearer ${TOKEN}" http://localhost:8080/v1/targets | jq .
 
 ### Option A - ScrapeConfig CRD (prometheus-operator >= 0.65, recommended)
 
-Reuses the same `serverTokenSecret` as the proxy - no credential duplication. Labels must match your `PrometheusSpec.scrapeConfigSelector`.
+Reuses the same `serverTokenSecret` as the proxy - no credential duplication.
+Labels must match your `PrometheusSpec.scrapeConfigSelector`.
 
 ```yaml
 scrapeConfig:
@@ -81,14 +88,16 @@ scrapeConfig:
     release: <your-prometheus-release-name>
 ```
 
-### Option B - http_sd_configs (standalone Prometheus or older operator)
+### Option B - http\_sd\_configs (standalone Prometheus or older operator)
 
-Point Prometheus at the in-cluster Service using `http_sd_configs`. Create the scrape config as a Secret and reference it via `additionalScrapeConfigsSecret`, or add it directly to `prometheus.yml`:
+Point Prometheus at the in-cluster Service using `http_sd_configs`. Create the scrape config
+as a Secret and reference it via `additionalScrapeConfigsSecret`, or add it directly to
+`prometheus.yml`:
 
 ```yaml
 - job_name: oci-compute
   http_sd_configs:
-    - url: http://oci-sd-oci-prometheus-sd-proxy.monitoring.svc:8080/v1/targets
+    - url: http://oci-sd-proxy-oci-prometheus-sd-proxy.monitoring.svc:8080/v1/targets
       authorization:
         type: Bearer
         credentials: <your-server-token>
@@ -106,9 +115,10 @@ Point Prometheus at the in-cluster Service using `http_sd_configs`. Create the s
 
 | Key | Default | Description |
 | --- | ------- | ----------- |
-| `replicaCount` | `1` | Replicas. Two is the practical maximum - more replicas multiply OCI API calls against the same rate limit. |
+| `replicaCount` | `1` | Number of replicas. Two is the practical maximum - more replicas multiply OCI API calls. |
+| `image.repository` | `ghcr.io/amaanx86/oci-prometheus-sd-proxy` | Image repository |
 | `image.tag` | `"latest"` | Image tag. Pin a semver in production. |
-| `image.pullPolicy` | `IfNotPresent` | Pull policy |
+| `image.pullPolicy` | `IfNotPresent` | Image pull policy |
 | `nameOverride` | `""` | Override chart name in resource names |
 | `fullnameOverride` | `""` | Override full resource name |
 | `imagePullSecrets` | `[]` | Pull secrets for private registries |
@@ -125,7 +135,7 @@ Point Prometheus at the in-cluster Service using `http_sd_configs`. Create the s
 | `serverTokenSecret.key` | `server-token` | Secret key for `SERVER_TOKEN` |
 | `ociPrivateKeySecret.enabled` | `true` | Mount OCI private key. Set `false` for `instance_principal` auth. |
 | `ociPrivateKeySecret.name` | `oci-sd-oci-key` | Secret name for OCI private key PEM |
-| `ociPrivateKeySecret.key` | `api_key.pem` | Secret key for OCI private key PEM |
+| `ociPrivateKeySecret.key` | `api_key.pem` | Secret key (filename) for OCI private key PEM |
 | `ociPrivateKeyMountPath` | `/etc/oci-sd/keys` | Directory where the key file is mounted |
 | `resources` | `{}` | CPU/memory requests and limits |
 | `livenessProbe.enabled` | `true` | Liveness probe on `/healthz` |
@@ -144,7 +154,7 @@ Point Prometheus at the in-cluster Service using `http_sd_configs`. Create the s
 | `extraVolumeMounts` | `[]` | Extra volume mounts |
 | `config` | see values.yaml | Non-sensitive `config.yaml` rendered into a ConfigMap |
 | `scrapeConfig.enabled` | `false` | Create a `ScrapeConfig` CRD (prometheus-operator >= 0.65) |
-| `scrapeConfig.labels` | `{}` | Labels added to the ScrapeConfig - must match `PrometheusSpec.scrapeConfigSelector` |
+| `scrapeConfig.labels` | `{}` | Labels to match `PrometheusSpec.scrapeConfigSelector` |
 | `scrapeConfig.jobName` | `oci-compute` | Prometheus job name |
 | `scrapeConfig.refreshInterval` | `60s` | Target list refresh interval |
 | `scrapeConfig.relabelings` | see values.yaml | Relabeling rules for `__meta_oci_*` labels |
@@ -163,8 +173,8 @@ deploy/helm/
     ├── deployment.yaml
     ├── service.yaml
     ├── serviceaccount.yaml
-    ├── pdb.yaml          # PodDisruptionBudget (disabled by default)
-    ├── scrapeconfig.yaml # ScrapeConfig CRD (disabled by default)
+    ├── pdb.yaml
+    ├── scrapeconfig.yaml
     └── NOTES.txt
 ```
 
@@ -185,12 +195,32 @@ helm template oci-sd deploy/helm --namespace monitoring
 
 ## Troubleshooting
 
-**Pod stuck in Pending**: The Secrets referenced by `serverTokenSecret` and `ociPrivateKeySecret` must exist before the pod starts. Create them first or disable `ociPrivateKeySecret.enabled` if using instance_principal auth.
+### Pod stuck in Pending
 
-**No targets returned**: Check that instances have the configured OCI tag (`config.discovery.tag_key` / `tag_value`). Omit both to discover all running instances. Verify the pod has network egress to OCI API endpoints for the configured regions.
+The Secrets referenced by `serverTokenSecret` and `ociPrivateKeySecret` must exist before the
+pod starts. Create them first or disable `ociPrivateKeySecret.enabled` if using
+`instance_principal` auth.
 
-**Auth failed on /v1/targets**: The `SERVER_TOKEN` in the Secret must match the `Authorization: Bearer <token>` header sent by Prometheus.
+### No targets returned
 
-**ScrapeConfig not picked up by Prometheus**: The labels on the ScrapeConfig must match `PrometheusSpec.scrapeConfigSelector`. Check with `kubectl get scrapeconfig -n monitoring`.
+Check that instances have the configured OCI tag (`config.discovery.tag_key` / `tag_value`).
+Omit both to discover all running instances. Verify the pod has network egress to OCI API
+endpoints for the configured regions.
 
-**Config changes not rolling out**: The Deployment uses a `checksum/config` annotation so it restarts automatically when the ConfigMap changes. If it doesn't, run `helm upgrade` to force a reconcile.
+### Auth failed on /v1/targets
+
+The `SERVER_TOKEN` in the Secret must match the `Authorization: Bearer <token>` header sent
+by Prometheus.
+
+### ScrapeConfig not picked up by Prometheus
+
+The labels on the ScrapeConfig must match `PrometheusSpec.scrapeConfigSelector`. Check with:
+
+```bash
+kubectl get scrapeconfig -n monitoring
+```
+
+### Config changes not rolling out
+
+The Deployment uses a `checksum/config` annotation so it restarts automatically when the
+ConfigMap changes. If it does not, run `helm upgrade` to force a reconcile.
