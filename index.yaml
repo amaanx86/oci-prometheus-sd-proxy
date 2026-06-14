@@ -4,11 +4,11 @@ entries:
   - annotations:
       artifacthub.io/license: Apache-2.0
     apiVersion: v2
-    appVersion: 1.5.4
-    created: "2026-06-13T20:14:03.594713798Z"
+    appVersion: 1.5.5
+    created: "2026-06-14T08:31:59.315628339Z"
     description: Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure
       compute instances.
-    digest: 36ea20bb27c84b84c7672db026a8b4468a8f04819e1cb44db22507dd31752946
+    digest: 55851157012e8a95b6754ee48d8c0a9666bdad371bbdfbab1df202f42a800232
     home: https://github.com/amaanax86/oci-prometheus-sd-proxy
     keywords:
     - prometheus
@@ -25,6 +25,6 @@ entries:
     - https://github.com/amaanax86/oci-prometheus-sd-proxy
     type: application
     urls:
-    - https://amaanx86.github.io/oci-prometheus-sd-proxy/oci-prometheus-sd-proxy-1.0.0-rc.1.tgz
-    version: 1.0.0-rc.1
-generated: "2026-06-13T20:14:03.594147431Z"
+    - https://amaanx86.github.io/oci-prometheus-sd-proxy/oci-prometheus-sd-proxy-1.0.0-rc.2.tgz
+    version: 1.0.0-rc.2
+generated: "2026-06-14T08:31:59.314781907Z"
