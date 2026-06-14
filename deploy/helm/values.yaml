@@ -6,8 +6,8 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/amaanax86/oci-prometheus-sd-proxy
-  # Documented quick-start tag; pin a release semver or digest in production.
+  repository: ghcr.io/amaanx86/oci-prometheus-sd-proxy
+  # Pin a release semver or digest in production; "latest" is provided for quick-start only.
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -156,8 +156,9 @@ config:
   server:
     port: 8080
   discovery:
-    tag_key: monitoring
-    tag_value: enabled
+    # tag_key and tag_value are optional. Omit both to discover all running instances.
+    # tag_key: monitoring
+    # tag_value: enabled
     linux_port: 9100
     windows_port: 9182
     refresh_interval: 5m
@@ -165,11 +166,12 @@ config:
   tenancies:
     - name: my-tenancy
       auth_type: api_key
-      region: us-ashburn-1
+      region: me-jeddah-1
       tenancy_id: ocid1.tenancy.oc1..example
       user_id: ocid1.user.oc1..example
       fingerprint: "00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff"
       private_key_path: /etc/oci-sd/keys/api_key.pem
+      passphrase: ""
       compartments: []
 
 # ScrapeConfig CRD (monitoring.coreos.com/v1alpha1, prometheus-operator >= 0.65).

@@ -2,15 +2,15 @@ apiVersion: v2
 name: oci-prometheus-sd-proxy
 description: Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure compute instances.
 type: application
-version: 1.0.0-rc.2
+version: 1.0.0
 appVersion: "1.5.5"
-home: https://github.com/amaanax86/oci-prometheus-sd-proxy
+home: https://github.com/amaanx86/oci-prometheus-sd-proxy
 sources:
-  - https://github.com/amaanax86/oci-prometheus-sd-proxy
+  - https://github.com/amaanx86/oci-prometheus-sd-proxy
 maintainers:
   - name: Amaan Ul Haq Siddiqui
     email: amaanulhaq.s@outlook.com
-    url: https://github.com/amaanax86
+    url: https://github.com/amaanx86
 keywords:
   - prometheus
   - service-discovery

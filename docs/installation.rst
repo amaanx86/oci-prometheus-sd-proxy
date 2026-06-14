@@ -33,6 +33,104 @@ Simplest setup using Docker Compose:
 
     docker-compose -f docker-compose-production.yml up -d
 
+Kubernetes - Helm
+-----------------
+
+Install on any Kubernetes cluster using the published Helm chart.
+
+**Prerequisites:** ``kubectl`` and ``helm`` (v3.8+) configured against your cluster.
+
+**Step 1 - Create secrets**
+
+The pod requires two Kubernetes Secrets before it can start:
+
+.. code-block:: bash
+
+    # Bearer token for /v1/targets
+    TOKEN="$(openssl rand -hex 32)"
+    kubectl create secret generic oci-sd-server-token \
+      --namespace monitoring \
+      --from-literal=server-token="${TOKEN}"
+
+    # OCI API private key (skip if using instance_principal auth)
+    kubectl create secret generic oci-sd-oci-key \
+      --namespace monitoring \
+      --from-file=api_key.pem=~/.oci/api_key.pem
+
+**Step 2 - Prepare a values file**
+
+Create ``my-values.yaml`` with your tenancy details. Do not put the token or private key here:
+
+.. code-block:: yaml
+
+    image:
+      tag: "1.5.5"
+
+    config:
+      server:
+        port: 8080
+      discovery:
+        linux_port: 9100
+        windows_port: 9182
+        refresh_interval: 5m
+        rate_limit_rps: 10.0
+      tenancies:
+        - name: my-tenancy
+          auth_type: api_key
+          region: me-jeddah-1
+          tenancy_id: ocid1.tenancy.oc1..example
+          user_id: ocid1.user.oc1..example
+          fingerprint: "00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff"
+          private_key_path: /etc/oci-sd/keys/api_key.pem
+          passphrase: ""
+          compartments: []
+
+**Step 3 - Install**
+
+Install directly from GHCR (no repo add needed):
+
+.. code-block:: bash
+
+    helm install oci-sd-proxy \
+      oci://ghcr.io/amaanx86/oci-prometheus-sd-proxy \
+      --version 1.0.0 \
+      --namespace monitoring \
+      --create-namespace \
+      -f my-values.yaml
+
+Or install from the GitHub Pages Helm repository:
+
+.. code-block:: bash
+
+    helm repo add oci-sd-proxy https://amaanx86.github.io/oci-prometheus-sd-proxy
+    helm repo update
+    helm install oci-sd-proxy oci-sd-proxy/oci-prometheus-sd-proxy \
+      --namespace monitoring \
+      --create-namespace \
+      -f my-values.yaml
+
+**Step 4 - Verify**
+
+.. code-block:: bash
+
+    # Check pod is running
+    kubectl get pods -n monitoring -l app.kubernetes.io/name=oci-prometheus-sd-proxy
+
+    # Health check via port-forward
+    kubectl port-forward -n monitoring svc/oci-sd-proxy-oci-prometheus-sd-proxy 8080:8080
+    curl http://localhost:8080/healthz
+
+    # Fetch discovered targets
+    curl -H "Authorization: Bearer ${TOKEN}" http://localhost:8080/v1/targets | jq .
+
+.. note::
+
+   The in-cluster HTTP SD endpoint is:
+   ``http://oci-sd-proxy-oci-prometheus-sd-proxy.monitoring.svc:8080/v1/targets``
+
+   Point Prometheus at this URL using ``http_sd_configs``. See :doc:`prometheus-integration`
+   for the full scrape config example.
+
 Binary
 ------
 
