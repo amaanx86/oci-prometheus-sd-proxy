@@ -1,11 +1,11 @@
 # OCI SD Proxy - Helm Chart for K8S Deployment
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/amaanax86/oci-prometheus-sd-proxy)](https://goreportcard.com/report/github.com/amaanax86/oci-prometheus-sd-proxy)
-[![GitHub Release](https://img.shields.io/github/v/release/amaanax86/oci-prometheus-sd-proxy)](https://github.com/amaanax86/oci-prometheus-sd-proxy/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/amaanx86/oci-prometheus-sd-proxy)](https://goreportcard.com/report/github.com/amaanx86/oci-prometheus-sd-proxy)
+[![GitHub Release](https://img.shields.io/github/v/release/amaanx86/oci-prometheus-sd-proxy)](https://github.com/amaanx86/oci-prometheus-sd-proxy/releases)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Docker Image](https://img.shields.io/badge/Docker-ghcr.io-blue?logo=docker)](https://github.com/amaanax86/oci-prometheus-sd-proxy/pkgs/container/oci-prometheus-sd-proxy)
+[![Docker Image](https://img.shields.io/badge/Docker-ghcr.io-blue?logo=docker)](https://github.com/amaanx86/oci-prometheus-sd-proxy/pkgs/container/oci-prometheus-sd-proxy)
 
-Helm chart for [oci-prometheus-sd-proxy](https://github.com/amaanax86/oci-prometheus-sd-proxy) - a Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure compute instances.
+Helm chart for [oci-prometheus-sd-proxy](https://github.com/amaanx86/oci-prometheus-sd-proxy) - a Prometheus HTTP Service Discovery proxy for Oracle Cloud Infrastructure compute instances.
 
 ## Quick Start
 
@@ -30,10 +30,27 @@ Copy and edit `values.yaml`, filling in your real tenancy OCIDs, region, user, a
 
 ### 3. Install
 
+Install directly from GHCR (recommended - no repo add needed):
+
 ```bash
-helm install oci-sd ./deploy/helm \
+helm install oci-sd-proxy \
+  oci://ghcr.io/amaanx86/oci-prometheus-sd-proxy \
+  --version <chart-version> \
   --namespace monitoring \
   --create-namespace \
+  --set image.tag=<app-version> \
+  -f my-values.yaml
+```
+
+Or install from the GitHub Pages Helm repo:
+
+```bash
+helm repo add oci-sd-proxy https://amaanx86.github.io/oci-prometheus-sd-proxy
+helm repo update
+helm install oci-sd-proxy oci-sd-proxy/oci-prometheus-sd-proxy \
+  --namespace monitoring \
+  --create-namespace \
+  --set image.tag=<app-version> \
   -f my-values.yaml
 ```
 
@@ -44,7 +61,7 @@ helm install oci-sd ./deploy/helm \
 kubectl get pods -n monitoring -l app.kubernetes.io/name=oci-prometheus-sd-proxy
 
 # Health check
-kubectl port-forward -n monitoring svc/oci-sd-oci-prometheus-sd-proxy 8080:8080
+kubectl port-forward -n monitoring svc/oci-sd-proxy-oci-prometheus-sd-proxy 8080:8080
 curl http://localhost:8080/healthz
 
 # Fetch targets
