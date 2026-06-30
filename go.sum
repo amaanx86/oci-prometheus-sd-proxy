@@ -12,6 +12,8 @@ github.com/oracle/oci-go-sdk/v65 v65.118.0 h1:m+wwAye5TvwJ5S+u45HM4MFetU56KWWbpr
 github.com/oracle/oci-go-sdk/v65 v65.118.0/go.mod h1:oo33NDf2XPqx3/N6oLG4jFlrqJ0xu4Rlt9SfuAbtDFs=
 github.com/oracle/oci-go-sdk/v65 v65.118.1 h1:Uf0xBYI2mhv3Cvl7DR9aEshodvjpD9BodV++/Odk9cI=
 github.com/oracle/oci-go-sdk/v65 v65.118.1/go.mod h1:oo33NDf2XPqx3/N6oLG4jFlrqJ0xu4Rlt9SfuAbtDFs=
+github.com/oracle/oci-go-sdk/v65 v65.119.0 h1:0u9ujtEACjk3Sr72bnbTyJlCquhJiiEceIyMDhN9zcs=
+github.com/oracle/oci-go-sdk/v65 v65.119.0/go.mod h1:nv7HqsLpM/5aH66gu6JD1oqMftTxGfxo3ow1eYKPSmI=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
