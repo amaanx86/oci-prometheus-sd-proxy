@@ -67,7 +67,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v4.1.2
         with:
-          cosign-release: v3.0.6
+          cosign-release: v3.1.2
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
