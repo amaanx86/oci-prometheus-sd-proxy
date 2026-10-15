@@ -1,6 +1,6 @@
 BINARY     := oci-sd-proxy
 IMAGE      := oci-prometheus-sd-proxy
-VERSION    := $(shell git describe --tags --abbrev=0 2>/dev/null || echo dev)
+VERSION    := $(shell git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo dev)
 LDFLAGS    := -s -w -X main.version=$(VERSION)
 
 .DEFAULT_GOAL := help
