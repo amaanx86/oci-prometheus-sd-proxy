@@ -3,8 +3,8 @@
 project = "oci-prometheus-sd-proxy"
 copyright = "2026, Amaan Ul Haq Siddiqui"
 author = "Amaan Ul Haq Siddiqui"
-version = "1.5"
-release = "1.5.5"
+version = "1.6"
+release = "1.6.0"
 
 extensions = [
     "myst_parser",  # Markdown support
