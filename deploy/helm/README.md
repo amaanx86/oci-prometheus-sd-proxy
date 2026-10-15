@@ -117,7 +117,7 @@ as a Secret and reference it via `additionalScrapeConfigsSecret`, or add it dire
 | --- | ------- | ----------- |
 | `replicaCount` | `1` | Number of replicas. Two is the practical maximum - more replicas multiply OCI API calls. |
 | `image.repository` | `ghcr.io/amaanx86/oci-prometheus-sd-proxy` | Image repository |
-| `image.tag` | `"latest"` | Image tag. Pin a semver in production. |
+| `image.tag` | `""` | Image tag. Empty uses the chart `appVersion`. |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy |
 | `nameOverride` | `""` | Override chart name in resource names |
 | `fullnameOverride` | `""` | Override full resource name |

@@ -7,8 +7,9 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/amaanx86/oci-prometheus-sd-proxy
-  # Pin a release semver or digest in production; "latest" is provided for quick-start only.
-  tag: "latest"
+  # Defaults to the chart appVersion so chart and image roll forward and back together.
+  # Override with a semver only to run an image other than the one the chart ships.
+  tag: ""
   pullPolicy: IfNotPresent
 
 # Override the chart name used in resource names.
