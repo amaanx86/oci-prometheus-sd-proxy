@@ -53,6 +53,12 @@ Makefile
 config.yaml
 .env
 
+# OCI API keys are mounted at runtime; keep them out of the builder stage's COPY . .
+oci-keys/
+deploy/docker/oci-keys/
+*.pem
+.claude/
+
 # Node modules, vendor, etc
 node_modules/
 vendor/
