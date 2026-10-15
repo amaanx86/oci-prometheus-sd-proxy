@@ -57,9 +57,9 @@ kubectl create secret generic oci-sd-oci-key \
 # Install from GHCR
 helm install oci-sd-proxy \
   oci://ghcr.io/amaanx86/oci-prometheus-sd-proxy \
-  --version 1.0.0-rc.2 \
+  --version 1.1.0 \
   --namespace monitoring \
-  --set image.tag=1.5.5 \
+  --set image.tag=1.6.0 \
   -f my-values.yaml
 ```
 

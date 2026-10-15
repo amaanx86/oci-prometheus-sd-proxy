@@ -64,7 +64,7 @@ Create ``my-values.yaml`` with your tenancy details. Do not put the token or pri
 .. code-block:: yaml
 
     image:
-      tag: "1.5.5"
+      tag: "1.6.0"
 
     config:
       server:
@@ -93,7 +93,7 @@ Install directly from GHCR (no repo add needed):
 
     helm install oci-sd-proxy \
       oci://ghcr.io/amaanx86/oci-prometheus-sd-proxy \
-      --version 1.0.0 \
+      --version 1.1.0 \
       --namespace monitoring \
       --create-namespace \
       -f my-values.yaml

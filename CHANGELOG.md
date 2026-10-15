@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-10-16
+
+### Changed
+
+- Raised the minimum Go version to 1.27 (`go.mod` directive, builder image `golang:1.27-alpine`, CI) ([#119](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/119), [#120](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/120))
+- Bumped `github.com/oracle/oci-go-sdk/v65` from `v65.117.1` to `v65.127.0`
+- Bumped `golang.org/x/time` to `v0.16.0` ([#122](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/122))
+- Bumped indirect `golang.org/x/crypto` to `v0.56.0`, clearing the Trivy findings for CVE-2026-78662 and CVE-2026-56855 (the affected `x/crypto/ssh` code is not reachable from this binary)
+- Pruned stale `go.sum` entries left behind by successive dependency bumps
+
+### CI
+
+- Migrated golangci-lint from v1.64.8 to v2.14.0 and converted `.golangci.yml` to the v2 schema. The v1 binary could not type-check against the Go 1.27 standard library, which left the Lint job failing on `main` since [#120](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/120)
+- Bumped GitHub Actions: `actions/checkout` v7.0.1, `actions/setup-go` v7, `actions/labeler` v7, `azure/setup-helm` v5.0.1, `docker/build-push-action` v7.4.0, `docker/setup-buildx-action` v4.4.1, `docker/login-action` v4.6.0, `docker/metadata-action` v6.2.0, `peaceiris/actions-gh-pages` v4.1.0, `sigstore/cosign` v3.1.3
+
+### Build
+
+- `make build`/`make docker-up` now derive `VERSION` from `v*` tags only; previously `git describe` picked up `helm-v*` tags and stamped binaries with the chart version
+- Excluded `oci-keys/` and `*.pem` from the Docker build context so local API keys never enter the builder stage
+
+### Helm
+
+- Promoted the chart to `v1.0.0` stable and removed the stale `deploy/kubernetes` chart copy ([#97](https://github.com/amaanx86/oci-prometheus-sd-proxy/pull/97))
+- Chart `v1.1.0`: `appVersion` bumped to `1.6.0`, and `image.tag` now defaults to `""` so the image follows `appVersion`. Previously the default `latest` meant the chart version never decided which image ran and rollbacks did not roll back the image. Installs that relied on the implicit `latest` now pin to `1.6.0`; set `image.tag: latest` to keep the old behaviour
+
 ## [1.5.5] - 2026-06-14
 
 ### Fixed
@@ -348,7 +373,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions CI/CD for testing and Docker image building
   - CodeQL security scanning
 
-[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.5...HEAD
+[Unreleased]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.5...v1.6.0
 [1.5.5]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/amaanx86/oci-prometheus-sd-proxy/compare/v1.5.2...v1.5.3
