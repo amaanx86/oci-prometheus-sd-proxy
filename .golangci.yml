@@ -1,26 +1,30 @@
+version: "2"
+
 linters:
+  # The v2 "standard" set (errcheck, govet, ineffassign, staticcheck, unused) is on by default;
+  # gosimple was folded into staticcheck.
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
     - gosec
     - misspell
+  settings:
+    gosec:
+      excludes:
+        - G304  # file path from variable - intentional for config/key loading
+        - G112  # ReadHeaderTimeout - server timeout tuning is out of scope here
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+
+formatters:
+  enable:
     - gofmt
-
-linters-settings:
-  gosec:
-    excludes:
-      - G304  # file path from variable - intentional for config/key loading
-      - G112  # ReadHeaderTimeout - server timeout tuning is out of scope here
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gosec
 
 run:
   timeout: 5m

@@ -27,7 +27,7 @@ vet: ## Run go vet
 lint: vet ## Lint code with golangci-lint
 	@command -v golangci-lint > /dev/null || { \
 		echo "golangci-lint not installed"; \
-		echo "Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		echo "Install: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"; \
 		exit 1; \
 	}
 	golangci-lint run ./...
