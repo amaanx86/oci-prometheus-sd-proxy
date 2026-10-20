@@ -3,7 +3,7 @@ module github.com/amaanx86/oci-prometheus-sd-proxy
 go 1.27.0
 
 require (
-	github.com/oracle/oci-go-sdk/v65 v65.127.0
+	github.com/oracle/oci-go-sdk/v65 v65.128.0
 	golang.org/x/time v0.16.0
 	gopkg.in/yaml.v3 v3.0.1
 )
